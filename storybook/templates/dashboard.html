@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 그림동화 대시보드</title>
+  <style>
+    body { font-family: 'Arial', sans-serif; background:#fafafa; max-width:960px; margin:40px auto; }
+    h1 { text-align:center; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:20px; margin-top:30px; }
+    .card { background:#fff; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.1); overflow:hidden; text-align:center; transition:0.2s; }
+    .card:hover { transform:translateY(-3px); }
+    .thumb { width:100%; height:180px; object-fit:cover; background:#f2f2f2; }
+    .title { padding:12px; font-weight:bold; }
+    .add-card { border:2px dashed #bbb; color:#999; font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .add-card:hover { background:#f0f0f0; color:#666; }
+    a { text-decoration:none; color:inherit; }
+  </style>
+</head>
+<body>
+  <h1>🌱 AI 그림동화 생성기 대시보드</h1>
+
+  <div class="grid">
+    <!-- 새 스토리 만들기 -->
+    <a href="/new">
+      <div class="card add-card">+ 새 스토리 만들기</div>
+    </a>
+
+    <!-- 저장된 스토리 목록 -->
+    {% for story in stories %}
+    <a href="/reader/{{story.id}}">
+      <div class="card">
+        {% if story.thumbnail %}
+          <img class="thumb" src="{{story.thumbnail}}" alt="thumbnail" />
+        {% else %}
+          <div class="thumb"></div>
+        {% endif %}
+        <div class="title">{{story.title}}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 그림동화 만들기</title>
+  <style>
+    body { font-family: 'Arial', sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; }
+    input, button { padding: 8px 10px; font-size: 1em; }
+    .story-box { background: #f6f6f6; padding: 16px; border-radius: 10px; margin-top: 20px; white-space: pre-wrap; }
+    .btns { margin: 10px 0 16px; }
+    .btns button + button { margin-left: 8px; }
+    @media print {
+      button, input, label { display: none !important; }
+      body { margin: 10mm; font-size: 18px; line-height: 1.8; }
+      .story-box { background: #fff; border: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🌱 AI 그림동화 생성기 (Demo)</h1>
+
+  <label>키워드 입력 (쉼표로 구분):</label><br />
+  <input type="text" id="keywords" placeholder="예: 씨앗, 숲, 친구" /><br /><br />
+
+  <label>페이지 수:</label>
+  <input type="number" id="pages" value="3" min="1" max="5" /><br /><br />
+
+  <div class="btns">
+    <button onclick="generateStory()">동화 생성하기</button>
+    <button onclick="saveStory()">현재 스토리 저장</button>
+    <button onclick="window.print()">PDF로 저장</button>
+  </div>
+
+  <div id="output" class="story-box"></div>
+
+  <script>
+    async function generateStory() {
+      const keywords = document.getElementById('keywords').value.split(',').map(k => k.trim());
+      const pages = parseInt(document.getElementById('pages').value);
+      const output = document.getElementById('output');
+
+      output.innerText = '⏳ 생성 중...';
+
+      const res = await fetch('/api/story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keywords, pages, withImages: true })
+      });
+      const data = await res.json();
+
+      let html = `<div><strong>📖 ${data.title}</strong></div>`;
+      html += `<div style="margin-top:10px; white-space:pre-wrap">${data.pages.join('\n\n')}</div>`;
+
+      if (data.images && data.images.length) {
+        html += `<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px;">`;
+        for (const url of data.images) {
+          html += `<div><img src="${url}" alt="" style="width:100%; border-radius:10px; border:1px solid #dfe3e6" /></div>`;
+        }
+        html += `</div>`;
+      }
+
+      output.innerHTML = html;
+      window.__lastStory = data; // 저장용
+    }
+
+    async function saveStory() {
+      if (!window.__lastStory) return alert('먼저 동화를 생성하세요!');
+      const res = await fetch('/api/story/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(window.__lastStory)
+      });
+      const data = await res.json();
+      alert(data.saved ? ('저장 완료!\n' + data.path) : '저장 실패');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>글 편집 - AI 그림동화</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --bg:#fafafa; --card:#ffffff; --muted:#666; --border:#e5e7eb; --accent:#2e7d32; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; background: var(--bg); margin: 0; }
+    header { max-width: 1000px; margin: 24px auto 0; padding: 0 16px; display:flex; align-items:center; gap:12px; }
+    header a { color:#444; text-decoration:none; }
+    header h1 { margin:0; font-size:22px; }
+    .badge { font-size:12px; padding:4px 8px; border-radius:999px; background:#eef2ff; color:#3949ab; margin-left:auto; }
+    main { max-width: 1000px; margin: 16px auto 40px; padding: 0 16px; display:grid; grid-template-columns: 360px 1fr; gap:16px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
+    .card h2 { margin:0 0 12px; font-size:18px; }
+    label { display:block; font-size:13px; color:#333; margin: 10px 0 6px; }
+    input[type="text"], input[type="number"], textarea {
+      width: 100%; padding: 10px 12px; border:1px solid var(--border); border-radius:10px; font-size:14px; background:#fff;
+    }
+    textarea { min-height: 80px; resize: vertical; }
+    .row { display:flex; gap:8px; align-items:center; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:#fff; }
+    .btn.primary { background: var(--accent); color:#fff; border-color: var(--accent); }
+    .btn.ghost { background:#fff; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    .list { display:flex; flex-direction:column; gap:12px; }
+    .page-item { border:1px dashed var(--border); border-radius:12px; padding:12px; background:#fcfcfc; }
+    .page-item header { display:flex; justify-content:space-between; align-items:center; padding:0; margin:0 0 8px; }
+    .page-item header h3 { margin:0; font-size:14px; color:#333; }
+    .page-actions { display:flex; gap:6px; }
+    footer { max-width: 1000px; margin: 0 auto 48px; padding: 0 16px; display:flex; justify-content:space-between; align-items:center; }
+    .hint { font-size:12px; color:var(--muted); }
+    .grow { flex:1; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/new">← 모드 선택</a>
+    <h1>글 편집</h1>
+    <span class="badge" id="modeBadge">mode</span>
+  </header>
+
+  <main>
+    <!-- 좌: 메타/AI 추천 패널 -->
+    <section class="card">
+      <h2>기본 정보</h2>
+      <label>제목</label>
+      <input type="text" id="title" placeholder="예: 지환이의 모험 일기" />
+
+      <label>페이지 수 (1~5)</label>
+      <input type="number" id="pageCount" min="1" max="5" value="3" />
+
+      <p class="muted">페이지 수를 바꾸면 편집 영역이 자동으로 반영됩니다.</p>
+
+      <hr style="margin:16px 0; border:none; border-top:1px solid var(--border);" />
+
+      <div id="aiPanel">
+        <h2>AI 추천 받기</h2>
+        <label>키워드 (쉼표로 구분)</label>
+        <input type="text" id="keywords" placeholder="예: 씨앗, 숲, 친구" />
+        <div class="row" style="margin-top:10px;">
+          <button class="btn primary" id="btnGen">AI로 추천 플롯 생성</button>
+          <span class="muted" id="genStatus"></span>
+        </div>
+        <p class="muted" style="margin-top:8px;">※ 현재는 간단 목업 모델을 사용합니다. (실제 Gemini/Imagen은 다음 단계 연동)</p>
+      </div>
+    </section>
+
+    <!-- 우: 페이지별 에디터 -->
+    <section class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h2>페이지별 문장</h2>
+        <div class="row">
+          <button class="btn ghost" id="btnAdd">+ 페이지 추가</button>
+          <button class="btn ghost" id="btnRemove">- 페이지 제거</button>
+        </div>
+      </div>
+
+      <div id="pages" class="list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="hint">작성 내용은 브라우저 메모리와 서버(JSON)로 임시 저장할 수 있습니다.</div>
+    <div class="row">
+      <button class="btn" id="btnSave">임시 저장</button>
+      <span class="grow"></span>
+      <button class="btn" onclick="window.location.href='/dashboard'">대시보드</button>
+      <button class="btn" disabled title="다음 단계에서 구현 예정">이미지 생성으로 이동</button>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- 상태 ----------
+    const urlParams = new URLSearchParams(location.search);
+    const mode = (urlParams.get('mode') || 'ai');
+    const modeBadge = document.getElementById('modeBadge');
+    const aiPanel = document.getElementById('aiPanel');
+    const pageCountEl = document.getElementById('pageCount');
+    const pagesEl = document.getElementById('pages');
+
+    modeBadge.textContent = (mode === 'manual') ? '직접 쓰기' : 'AI와 함께';
+    aiPanel.style.display = (mode === 'manual') ? 'none' : 'block';
+
+    // ---------- 유틸 ----------
+    function currentPageCount() {
+      const n = parseInt(pageCountEl.value || '1', 10);
+      return Math.max(1, Math.min(n, 5));
+    }
+
+    function ensureEditors(n) {
+      // 현재 개수와 비교하여 추가/삭제
+      const cur = pagesEl.querySelectorAll('.page-item').length;
+      if (cur < n) {
+        for (let i = cur; i < n; i++) addEditor();
+      } else if (cur > n) {
+        for (let i = cur; i > n; i--) removeEditor();
+      }
+      renumberEditors();
+    }
+
+    function addEditor(text='') {
+      const idx = pagesEl.querySelectorAll('.page-item').length + 1;
+      const wrap = document.createElement('div');
+      wrap.className = 'page-item';
+      wrap.innerHTML = `
+        <header><h3>페이지 ${idx}</h3></header>
+        <textarea placeholder="이 페이지의 한 줄 문장(짧게)">${text}</textarea>
+      `;
+      pagesEl.appendChild(wrap);
+    }
+
+    function removeEditor() {
+      const last = pagesEl.querySelector('.page-item:last-child');
+      if (last) last.remove();
+    }
+
+    function renumberEditors() {
+      [...pagesEl.querySelectorAll('.page-item header h3')].forEach((h, i) => {
+        h.textContent = `페이지 ${i+1}`;
+      });
+    }
+
+    function editorsToLines() {
+      const items = [...pagesEl.querySelectorAll('.page-item textarea')];
+      return items.map((t, i) => `${i+1}. ${t.value.trim()}`.trim());
+    }
+
+    // ---------- 초기화 ----------
+    ensureEditors(currentPageCount());
+
+    // ---------- 이벤트 ----------
+    pageCountEl.addEventListener('change', () => {
+      pageCountEl.value = currentPageCount();
+      ensureEditors(currentPageCount());
+    });
+
+    document.getElementById('btnAdd').addEventListener('click', () => {
+      const n = Math.min(currentPageCount() + 1, 5);
+      pageCountEl.value = n;
+      ensureEditors(n);
+    });
+
+    document.getElementById('btnRemove').addEventListener('click', () => {
+      const n = Math.max(currentPageCount() - 1, 1);
+      pageCountEl.value = n;
+      ensureEditors(n);
+    });
+
+    // AI 추천
+    const btnGen = document.getElementById('btnGen');
+    const genStatus = document.getElementById('genStatus');
+    if (btnGen) {
+      btnGen.addEventListener('click', async () => {
+        try {
+          genStatus.textContent = '생성 중...';
+          const keywords = (document.getElementById('keywords').value || '')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+          const pages = currentPageCount();
+
+          const res = await fetch('/api/story', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keywords, pages })
+          });
+          const data = await res.json();
+
+          // 결과 반영
+          document.getElementById('title').value = data.title || '맞춤 동화(초안)';
+          ensureEditors((data.pages || []).length || pages);
+          const textareas = pagesEl.querySelectorAll('.page-item textarea');
+          (data.pages || []).forEach((line, i) => {
+            if (textareas[i]) {
+              // "1. ..." 형식이면 번호 제거 후 문구만 채움
+              const txt = ('' + line).replace(/^\s*\d+\.\s*/, '');
+              textareas[i].value = txt;
+            }
+          });
+          genStatus.textContent = '완료!';
+          setTimeout(() => genStatus.textContent = '', 1200);
+        } catch (e) {
+          console.error(e);
+          genStatus.textContent = '오류';
+        }
+      });
+    }
+
+    // 임시 저장 (JSON 파일로)
+    document.getElementById('btnSave').addEventListener('click', async () => {
+      const title = document.getElementById('title').value.trim() || '맞춤 동화(초안)';
+      const pagesCount = currentPageCount();
+
+      // 저장 포맷(추후 이미지 URL 붙일 수 있도록 확장 여지)
+      const lines = editorsToLines(); // "1. ..." 형식으로 저장
+      const payload = {
+        title,
+        pages: lines.map((t, i) => ({ index: i+1, text: t, image_url: "" })),
+        meta: {
+          mode,
+          saved_at: new Date().toISOString(),
+          page_count: pagesCount
+        }
+      };
+
+      const res = await fetch('/api/story/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.saved) {
+        alert('저장 완료!\n' + (data.path || ''));
+      } else {
+        alert('저장 실패');
+      }
+    });
+  </script>
+</body>
+</html>

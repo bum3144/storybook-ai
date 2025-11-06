@@ -2,243 +2,269 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>글 편집 - AI 그림동화</title>
+  <title>글 편집</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { --bg:#fafafa; --card:#ffffff; --muted:#666; --border:#e5e7eb; --accent:#2e7d32; }
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; background: var(--bg); margin: 0; }
-    header { max-width: 1000px; margin: 24px auto 0; padding: 0 16px; display:flex; align-items:center; gap:12px; }
-    header a { color:#444; text-decoration:none; }
-    header h1 { margin:0; font-size:22px; }
-    .badge { font-size:12px; padding:4px 8px; border-radius:999px; background:#eef2ff; color:#3949ab; margin-left:auto; }
-    main { max-width: 1000px; margin: 16px auto 40px; padding: 0 16px; display:grid; grid-template-columns: 360px 1fr; gap:16px; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; }
-    .card h2 { margin:0 0 12px; font-size:18px; }
-    label { display:block; font-size:13px; color:#333; margin: 10px 0 6px; }
-    input[type="text"], input[type="number"], textarea {
-      width: 100%; padding: 10px 12px; border:1px solid var(--border); border-radius:10px; font-size:14px; background:#fff;
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --subtext: #475569;
+      --line: #e5e7eb;
+      --brand: #2563eb;
+      --brand-weak: #dbeafe;
+      --danger: #ef4444;
+      --muted: #64748b;
+      --radius: 14px;
     }
-    textarea { min-height: 80px; resize: vertical; }
-    .row { display:flex; gap:8px; align-items:center; }
-    .muted { color: var(--muted); font-size: 12px; }
-    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; border:1px solid var(--border); cursor:pointer; background:#fff; }
-    .btn.primary { background: var(--accent); color:#fff; border-color: var(--accent); }
-    .btn.ghost { background:#fff; }
-    .btn:disabled { opacity:.6; cursor:not-allowed; }
-    .list { display:flex; flex-direction:column; gap:12px; }
-    .page-item { border:1px dashed var(--border); border-radius:12px; padding:12px; background:#fcfcfc; }
-    .page-item header { display:flex; justify-content:space-between; align-items:center; padding:0; margin:0 0 8px; }
-    .page-item header h3 { margin:0; font-size:14px; color:#333; }
-    .page-actions { display:flex; gap:6px; }
-    footer { max-width: 1000px; margin: 0 auto 48px; padding: 0 16px; display:flex; justify-content:space-between; align-items:center; }
-    .hint { font-size:12px; color:var(--muted); }
-    .grow { flex:1; }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Pretendard, "Noto Sans KR", sans-serif; background: var(--bg); color: var(--text); }
+
+    .wrap { max-width: 1180px; margin: 28px auto; padding: 0 16px; }
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .back { color: var(--muted); text-decoration: none; font-size: 14px; }
+    .title { margin: 0; font-size: 28px; font-weight: 800; }
+
+    .grid { display: grid; gap: 16px; grid-template-columns: 380px 1fr; }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 18px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
+    }
+
+    .sec-title { margin: 0 0 10px; font-size: 18px; font-weight: 700; }
+    .hint { margin: 6px 0 0; color: var(--subtext); font-size: 13px; }
+    .row { margin-bottom: 14px; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+
+    input[type="text"], input[type="number"], textarea {
+      width: 100%; padding: 12px; font-size: 15px;
+      border: 1px solid var(--line); border-radius: 10px; outline: none; background: #fff;
+    }
+    input:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-weak); }
+
+    textarea { min-height: 112px; resize: vertical; }
+
+    .page { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 14px; background: #fff; }
+    .page h4 { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+
+    /* 버튼 공통 */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 12px; height: 42px;
+      border-radius: 10px; border: 1px solid var(--line);
+      background: #fff; color: var(--text);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; line-height: 1; min-width: 0; /* 줄바꿈 방지 + 폭 강제 */
+    }
+    .btn:hover { background: #f9fafb; }
+    .btn-primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn-primary:hover { filter: brightness(0.95); }
+    .btn-danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+    /* 버튼 묶음 컨테이너 */
+    .actions { display: flex; gap: 10px; align-items: center; }
+    .actions.nowrap { flex-wrap: nowrap; } /* 한 줄 고정 */
+    .actions .btn { flex: 1 1 0; }          /* 3등분 균등 분할 */
+
+    hr { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
   </style>
 </head>
 <body>
-  <header>
-    <a href="/new">← 모드 선택</a>
-    <h1>글 편집</h1>
-    <span class="badge" id="modeBadge">mode</span>
-  </header>
-
-  <main>
-    <!-- 좌: 메타/AI 추천 패널 -->
-    <section class="card">
-      <h2>기본 정보</h2>
-      <label>제목</label>
-      <input type="text" id="title" placeholder="예: 지환이의 모험 일기" />
-
-      <label>페이지 수 (1~5)</label>
-      <input type="number" id="pageCount" min="1" max="5" value="3" />
-
-      <p class="muted">페이지 수를 바꾸면 편집 영역이 자동으로 반영됩니다.</p>
-
-      <hr style="margin:16px 0; border:none; border-top:1px solid var(--border);" />
-
-      <div id="aiPanel">
-        <h2>AI 추천 받기</h2>
-        <label>키워드 (쉼표로 구분)</label>
-        <input type="text" id="keywords" placeholder="예: 씨앗, 숲, 친구" />
-        <div class="row" style="margin-top:10px;">
-          <button class="btn primary" id="btnGen">AI로 추천 플롯 생성</button>
-          <span class="muted" id="genStatus"></span>
-        </div>
-        <p class="muted" style="margin-top:8px;">※ 현재는 간단 목업 모델을 사용합니다. (실제 Gemini/Imagen은 다음 단계 연동)</p>
-      </div>
-    </section>
-
-    <!-- 우: 페이지별 에디터 -->
-    <section class="card">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
-        <h2>페이지별 문장</h2>
-        <div class="row">
-          <button class="btn ghost" id="btnAdd">+ 페이지 추가</button>
-          <button class="btn ghost" id="btnRemove">- 페이지 제거</button>
-        </div>
-      </div>
-
-      <div id="pages" class="list"></div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="hint">작성 내용은 브라우저 메모리와 서버(JSON)로 임시 저장할 수 있습니다.</div>
-    <div class="row">
-      <button class="btn" id="btnSave">임시 저장</button>
-      <span class="grow"></span>
-      <button class="btn" onclick="window.location.href='/dashboard'">대시보드</button>
-      <button class="btn" disabled title="다음 단계에서 구현 예정">이미지 생성으로 이동</button>
+  <div class="wrap">
+    <div class="header">
+      <a class="back" href="/dashboard">← 모두 선택</a>
+      <h1 class="title">글 편집</h1>
     </div>
-  </footer>
+
+    <div class="grid">
+      <!-- 왼쪽: 폼 -->
+      <section class="panel">
+        <h3 class="sec-title">기본 정보</h3>
+
+        <div class="row">
+          <label for="title">제목</label>
+          <input id="title" type="text" placeholder="예: 지환이의 모험 일기" />
+        </div>
+
+        <div class="row">
+          <label for="pageCount">페이지 수 (1~5)</label>
+          <input id="pageCount" type="number" min="1" max="5" value="3" />
+          <p class="hint">페이지 수를 바꾸면 편집 영역이 자동으로 맞춰집니다.</p>
+        </div>
+
+        <hr />
+
+        <h3 class="sec-title">AI 추천 받기</h3>
+        <div class="row">
+          <label for="keywords">키워드 (쉼표로 구분)</label>
+          <input id="keywords" type="text" placeholder="예: 씨앗, 숲, 친구" />
+          <div style="margin-top:8px; display:flex; align-items:center; gap:6px;">
+            <input id="autoAdjust" type="checkbox" checked />
+            <label for="autoAdjust" style="margin:0;">키워드 개수에 맞춰 페이지 수 자동 조정</label>
+          </div>
+          <button id="btnSuggest" class="btn btn-primary" style="margin-top:12px; width:100%;">AI로 추천 플롯 생성</button>
+        </div>
+
+        <hr />
+        <!-- 여기: 버튼 3개 한 줄 고정 -->
+        <div class="actions nowrap">
+          <button id="btnTemp" class="btn">임시 저장</button>
+          <a id="btnDash" class="btn" href="/dashboard">대시보드</a>
+          <a id="btnToImages" class="btn btn-primary" href="/images">이미지 생성</a>
+        </div>
+      </section>
+
+      <!-- 오른쪽: 페이지별 문장 -->
+      <section class="panel">
+        <h3 class="sec-title">페이지별 문장</h3>
+        <div id="pages"></div>
+        <div class="actions" style="margin-top:8px;">
+          <button id="btnAdd" class="btn">+ 페이지 추가</button>
+          <button id="btnDel" class="btn btn-danger">- 페이지 제거</button>
+        </div>
+      </section>
+    </div>
+  </div>
 
   <script>
-    // ---------- 상태 ----------
-    const urlParams = new URLSearchParams(location.search);
-    const mode = (urlParams.get('mode') || 'ai');
-    const modeBadge = document.getElementById('modeBadge');
-    const aiPanel = document.getElementById('aiPanel');
-    const pageCountEl = document.getElementById('pageCount');
-    const pagesEl = document.getElementById('pages');
+    // 간단 상태
+    const state = { title: '', pageCount: 3, pages: [], keywords: [] };
 
-    modeBadge.textContent = (mode === 'manual') ? '직접 쓰기' : 'AI와 함께';
-    aiPanel.style.display = (mode === 'manual') ? 'none' : 'block';
+    // 요소 캐시
+    const elTitle = document.getElementById('title');
+    const elPageCount = document.getElementById('pageCount');
+    const elKeywords = document.getElementById('keywords');
+    const elAutoAdjust = document.getElementById('autoAdjust');
+    const elPages = document.getElementById('pages');
+    const btnSuggest = document.getElementById('btnSuggest');
+    const btnTemp = document.getElementById('btnTemp');
+    const btnAdd = document.getElementById('btnAdd');
+    const btnDel = document.getElementById('btnDel');
 
-    // ---------- 유틸 ----------
-    function currentPageCount() {
-      const n = parseInt(pageCountEl.value || '1', 10);
-      return Math.max(1, Math.min(n, 5));
-    }
+    // 로컬 저장 키
+    const LS_KEY = 'storybook:editor';
 
-    function ensureEditors(n) {
-      // 현재 개수와 비교하여 추가/삭제
-      const cur = pagesEl.querySelectorAll('.page-item').length;
-      if (cur < n) {
-        for (let i = cur; i < n; i++) addEditor();
-      } else if (cur > n) {
-        for (let i = cur; i > n; i--) removeEditor();
-      }
-      renumberEditors();
-    }
+    initFromStorage();
+    renderPages();
 
-    function addEditor(text='') {
-      const idx = pagesEl.querySelectorAll('.page-item').length + 1;
-      const wrap = document.createElement('div');
-      wrap.className = 'page-item';
-      wrap.innerHTML = `
-        <header><h3>페이지 ${idx}</h3></header>
-        <textarea placeholder="이 페이지의 한 줄 문장(짧게)">${text}</textarea>
-      `;
-      pagesEl.appendChild(wrap);
-    }
+    // 입력 핸들러
+    elTitle.addEventListener('input', () => { state.title = elTitle.value; saveLocal(); });
+    elPageCount.addEventListener('input', () => {
+      const n = clamp(parseInt(elPageCount.value || '1'), 1, 5);
+      state.pageCount = n;
+      ensurePageSlots(n);
+      renderPages();
+      saveLocal();
+    });
+    elKeywords.addEventListener('input', handleKeywordsChange);
 
-    function removeEditor() {
-      const last = pagesEl.querySelector('.page-item:last-child');
-      if (last) last.remove();
-    }
-
-    function renumberEditors() {
-      [...pagesEl.querySelectorAll('.page-item header h3')].forEach((h, i) => {
-        h.textContent = `페이지 ${i+1}`;
-      });
-    }
-
-    function editorsToLines() {
-      const items = [...pagesEl.querySelectorAll('.page-item textarea')];
-      return items.map((t, i) => `${i+1}. ${t.value.trim()}`.trim());
-    }
-
-    // ---------- 초기화 ----------
-    ensureEditors(currentPageCount());
-
-    // ---------- 이벤트 ----------
-    pageCountEl.addEventListener('change', () => {
-      pageCountEl.value = currentPageCount();
-      ensureEditors(currentPageCount());
+    btnAdd.addEventListener('click', () => {
+      if (state.pageCount >= 5) return;
+      state.pageCount++;
+      elPageCount.value = state.pageCount;
+      ensurePageSlots(state.pageCount);
+      renderPages();
+      saveLocal();
     });
 
-    document.getElementById('btnAdd').addEventListener('click', () => {
-      const n = Math.min(currentPageCount() + 1, 5);
-      pageCountEl.value = n;
-      ensureEditors(n);
+    btnDel.addEventListener('click', () => {
+      if (state.pageCount <= 1) return;
+      state.pageCount--;
+      elPageCount.value = state.pageCount;
+      state.pages = state.pages.slice(0, state.pageCount);
+      renderPages();
+      saveLocal();
     });
 
-    document.getElementById('btnRemove').addEventListener('click', () => {
-      const n = Math.max(currentPageCount() - 1, 1);
-      pageCountEl.value = n;
-      ensureEditors(n);
+    btnTemp.addEventListener('click', () => {
+      saveLocal();
+      alert('임시 저장되었습니다.');
     });
 
-    // AI 추천
-    const btnGen = document.getElementById('btnGen');
-    const genStatus = document.getElementById('genStatus');
-    if (btnGen) {
-      btnGen.addEventListener('click', async () => {
-        try {
-          genStatus.textContent = '생성 중...';
-          const keywords = (document.getElementById('keywords').value || '')
-            .split(',')
-            .map(s => s.trim())
-            .filter(Boolean);
-          const pages = currentPageCount();
-
-          const res = await fetch('/api/story', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keywords, pages })
-          });
-          const data = await res.json();
-
-          // 결과 반영
-          document.getElementById('title').value = data.title || '맞춤 동화(초안)';
-          ensureEditors((data.pages || []).length || pages);
-          const textareas = pagesEl.querySelectorAll('.page-item textarea');
-          (data.pages || []).forEach((line, i) => {
-            if (textareas[i]) {
-              // "1. ..." 형식이면 번호 제거 후 문구만 채움
-              const txt = ('' + line).replace(/^\s*\d+\.\s*/, '');
-              textareas[i].value = txt;
-            }
-          });
-          genStatus.textContent = '완료!';
-          setTimeout(() => genStatus.textContent = '', 1200);
-        } catch (e) {
-          console.error(e);
-          genStatus.textContent = '오류';
-        }
-      });
-    }
-
-    // 임시 저장 (JSON 파일로)
-    document.getElementById('btnSave').addEventListener('click', async () => {
-      const title = document.getElementById('title').value.trim() || '맞춤 동화(초안)';
-      const pagesCount = currentPageCount();
-
-      // 저장 포맷(추후 이미지 URL 붙일 수 있도록 확장 여지)
-      const lines = editorsToLines(); // "1. ..." 형식으로 저장
-      const payload = {
-        title,
-        pages: lines.map((t, i) => ({ index: i+1, text: t, image_url: "" })),
-        meta: {
-          mode,
-          saved_at: new Date().toISOString(),
-          page_count: pagesCount
-        }
-      };
-
-      const res = await fetch('/api/story/save', {
+    // 목업 API 호출(텍스트 생성)
+    btnSuggest.addEventListener('click', async () => {
+      const res = await fetch('/api/story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ keywords: state.keywords, pages: state.pageCount })
       });
       const data = await res.json();
-      if (data.saved) {
-        alert('저장 완료!\n' + (data.path || ''));
-      } else {
-        alert('저장 실패');
-      }
+      const lines = Array.isArray(data.pages) ? data.pages : [];
+      for (let i = 0; i < state.pageCount; i++) state.pages[i] = lines[i] || '';
+      renderPages();
+      saveLocal();
     });
+
+    function handleKeywordsChange() {
+      const raw = (elKeywords.value || '').split(',').map(s => s.trim()).filter(Boolean);
+      state.keywords = raw.slice(0, 5);
+      if (elAutoAdjust.checked) {
+        const n = clamp(state.keywords.length || state.pageCount, 1, 5);
+        state.pageCount = n;
+        elPageCount.value = n;
+        ensurePageSlots(n);
+        autoFillByKeywords();
+      } else {
+        autoFillByKeywords();
+      }
+      renderPages();
+      saveLocal();
+    }
+
+    // 키워드에서 기본 한 줄 채우기 (사용자에게 즉각 피드백)
+    function autoFillByKeywords() {
+      for (let i = 0; i < state.pageCount; i++) {
+        const kw = state.keywords[i] || `장면 ${i + 1}`;
+        state.pages[i] = `${i + 1}. '${kw}'을(를) 주제로 한 장면.`;
+      }
+    }
+
+    // 페이지 편집 영역 렌더
+    function renderPages() {
+      elPages.innerHTML = '';
+      for (let i = 0; i < state.pageCount; i++) {
+        const box = document.createElement('div');
+        box.className = 'page';
+        const h = document.createElement('h4');
+        h.textContent = `페이지 ${i + 1}`;
+        const ta = document.createElement('textarea');
+        ta.value = state.pages[i] || '';
+        ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
+        ta.addEventListener('input', () => { state.pages[i] = ta.value; saveLocal(); });
+        box.appendChild(h);
+        box.appendChild(ta);
+        elPages.appendChild(box);
+      }
+    }
+
+    // 페이지 수에 맞게 내부 배열 길이 보정
+    function ensurePageSlots(n) {
+      while (state.pages.length < n) state.pages.push('');
+      if (state.pages.length > n) state.pages = state.pages.slice(0, n);
+    }
+
+    // 로컬 저장/로드
+    function saveLocal() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+    function initFromStorage() {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) { ensurePageSlots(3); return; }
+      try {
+        const data = JSON.parse(raw);
+        state.title = data.title || '';
+        state.pageCount = clamp(parseInt(data.pageCount || 3), 1, 5);
+        state.pages = Array.isArray(data.pages) ? data.pages : [];
+        state.keywords = Array.isArray(data.keywords) ? data.keywords : [];
+        elTitle.value = state.title;
+        elPageCount.value = state.pageCount;
+        elKeywords.value = state.keywords.join(', ');
+        ensurePageSlots(state.pageCount);
+      } catch { ensurePageSlots(3); }
+    }
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
   </script>
 </body>
 </html>

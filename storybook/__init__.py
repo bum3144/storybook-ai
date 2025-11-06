@@ -1,14 +1,14 @@
 # storybook/__init__.py
 from flask import Flask
 from storybook.routes.api import api_bp
-from storybook.routes.ui import ui_bp  # ✅ 새로 추가
+from storybook.routes.ui import ui_bp  # 새로 추가
 
 def create_app():
     app = Flask(__name__)
 
     # Blueprint 등록
     app.register_blueprint(api_bp, url_prefix="/api")
-    app.register_blueprint(ui_bp)  # ✅ HTML 라우트 등록
+    app.register_blueprint(ui_bp)  # HTML 라우트 등록
 
     @app.route("/")
     def home():

@@ -1,214 +1,183 @@
-<!-- storybook/templates/images.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>이미지 생성 · AI 그림동화</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>이미지 생성</title>
   <style>
-    :root{
-      --txt:#111; --muted:#6b7280; --bg:#f7f9fa; --card:#ffffff; --line:#e5e7eb; --accent:#16a34a;
-    }
+    :root { --gap: 16px; --radius: 12px; --border: #e5e7eb; --card:#fff; --bg:#f9fafb; --text:#111827; --sub:#6b7280; --primary:#2563eb; --primary-hover:#1e40af; }
     *{box-sizing:border-box}
-    body{
-      margin:0; padding:24px;
-      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Helvetica,Arial;
-      color:var(--txt); background:#fff;
-    }
-    header{display:flex; align-items:center; gap:12px; margin-bottom:20px}
-    header a.back{color:var(--muted); text-decoration:none; border:1px solid var(--line); padding:6px 10px; border-radius:8px}
-    h1{font-size:22px; margin:0}
-    .desc{color:var(--muted); font-size:14px; margin-top:4px}
-
-    .wrap{display:grid; grid-template-columns:1.25fr .75fr; gap:20px; align-items:start}
-    @media (max-width: 980px){ .wrap{grid-template-columns:1fr} }
-
-    .pane{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px}
-    .pane h2{font-size:18px; margin:0 0 12px 0}
-    .pages{display:flex; flex-direction:column; gap:10px}
-    .page-row{display:flex; gap:10px; align-items:flex-start}
-    .page-row small{color:var(--muted)}
-    .page-text{
-      flex:1; border:1px solid var(--line); border-radius:10px; padding:10px; min-height:44px; background:#fff;
-      white-space:pre-wrap;
-    }
-
-    .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
-    @media (max-width: 980px){ .grid{grid-template-columns:repeat(2,1fr)} }
-    @media (max-width: 640px){ .grid{grid-template-columns:1fr} }
-    .thumb{
-      border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg);
-      aspect-ratio: 1 / 1; display:flex; align-items:center; justify-content:center;
-    }
-    .thumb img{width:100%; height:100%; object-fit:cover}
-    .empty{color:var(--muted); font-size:14px}
-
-    .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px}
-    button{
-      border:1px solid var(--line); background:#fff; border-radius:10px; padding:10px 14px; cursor:pointer;
-      font-size:14px;
-    }
-    .primary{background:var(--accent); color:#fff; border-color:var(--accent)}
-    .ghost{background:#fff}
-
-    @media print {
-      header, .toolbar{display:none !important}
-      body{padding:0}
-      .wrap{grid-template-columns:1fr}
-      .pane{border:none}
-    }
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif}
+    .wrap{display:grid;grid-template-columns:360px 1fr;gap:24px;max-width:1280px;margin:0 auto;padding:28px}
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+    h1{font-size:22px;margin:0 0 16px 0}
+    label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+    select{width:100%;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 12px;background:#fff}
+    .btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-weight:600;cursor:pointer;white-space:nowrap}
+    .btn:hover{background:#f3f4f6}
+    .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+    .btn-block{width:100%}
+    .row{display:flex;gap:12px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff}
+    .thumb{width:100%;aspect-ratio:4/5;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#9ca3af;background:#fafafa;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .cap{font-size:13px;color:var(--sub);margin-top:8px}
+    .foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .chk{display:flex;align-items:center;gap:8px}
+    @media (max-width: 980px){.wrap{grid-template-columns:1fr}.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <header>
-    <a class="back" href="/editor">← 글 편집으로</a>
-    <div>
-      <h1>🖼️ 이미지 생성</h1>
-      <div class="desc">페이지별 문장을 기반으로 일러스트 미리보기를 생성합니다.</div>
-    </div>
-  </header>
-
   <div class="wrap">
-    <!-- Left: Image gallery -->
-    <section class="pane">
-      <h2 id="title">제목</h2>
-      <div id="gallery" class="grid">
-        <div class="empty">아직 이미지가 없습니다. 아래 버튼으로 생성하세요.</div>
-      </div>
-      <div class="toolbar">
-        <button id="btn-generate" class="primary">이미지 생성하기</button>
-        <button id="btn-save" class="ghost">현재 스토리 저장(JSON)</button>
-        <button id="btn-print" class="ghost">PDF로 저장(인쇄)</button>
-        <a href="/dashboard"><button class="ghost">대시보드로</button></a>
-      </div>
-    </section>
+    <!-- 좌측 옵션 -->
+    <aside class="panel">
+      <h1>이미지 생성</h1>
+      <label for="styleSel">스타일</label>
+      <select id="styleSel">
+        <option value="storybook_basic">동화 일러스트 (기본)</option>
+        <option value="pencil">연필 스케치</option>
+        <option value="watercolor">수채화</option>
+      </select>
 
-    <!-- Right: Page texts -->
-    <aside class="pane">
-      <h2>페이지별 문장</h2>
-      <div id="pages" class="pages"></div>
+      <!-- 한 줄 전폭 버튼 -->
+      <button id="btnAll" class="btn btn-primary btn-block" style="margin-top:16px">전체 이미지 생성</button>
+
+      <!-- 두 개 나란히 -->
+      <div class="row" style="margin-top:12px">
+        <button id="btnSelected" class="btn btn-block">선택만 다시 생성</button>
+        <button id="btnSave" class="btn btn-block">완성본 저장(JSON)</button>
+      </div>
+
+      <button id="btnBack" class="btn btn-block" style="margin-top:12px">글 편집으로</button>
     </aside>
+
+    <!-- 우측 미리보기 -->
+    <main class="panel">
+      <div class="grid" id="grid"></div>
+    </main>
   </div>
 
   <script>
-    // 서버에서 주입된 값
-    const rawTitle = {{ (title|tojson)|safe }};
-    const pagesJson = {{ (pages_json|tojson)|safe }};
+    const KEY = 'storybook.last_story';
+    const grid = document.getElementById('grid');
+    const styleSel = document.getElementById('styleSel');
 
-    // 상태
-    let state = {
-      title: rawTitle || "무제",
-      pages: [],
-      images: []
-    };
+    let story = null;           // { title, pages[], images[] }
+    let selected = new Set();   // 재생성 체크
 
-    // 초기 렌더
-    function initFromParams() {
-      try {
-        const parsed = JSON.parse(pagesJson || '[]');
-        if (Array.isArray(parsed)) state.pages = parsed.map(x => String(x||'').trim());
-      } catch(e){ state.pages = []; }
-      if (!state.pages.length) state.pages = ["이 페이지의 한 줄 문장(짧게)"];
-      document.getElementById('title').textContent = state.title;
-      renderPages();
-    }
-
-    function renderPages() {
-      const box = document.getElementById('pages');
-      box.innerHTML = '';
-      state.pages.forEach((line, idx) => {
-        const row = document.createElement('div');
-        row.className = 'page-row';
-        row.innerHTML = `
-          <small>${idx+1}.</small>
-          <div class="page-text">${escapeHtml(line)}</div>
-        `;
-        box.appendChild(row);
-      });
-    }
-
-    function renderImages() {
-      const g = document.getElementById('gallery');
-      g.innerHTML = '';
-      if (!state.images.length) {
-        g.innerHTML = '<div class="empty">이미지를 생성해 보세요.</div>';
+    function loadStory() {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) {
+        alert('편집된 스토리가 없습니다. 글 편집 화면에서 내용을 작성해 주세요.');
+        window.location.href = '/editor';
         return;
       }
-      state.images.forEach(url => {
-        const d = document.createElement('div');
-        d.className = 'thumb';
-        d.innerHTML = `<img src="${url}" alt="">`;
-        g.appendChild(d);
+      story = JSON.parse(raw);
+      story.images = story.images || Array(story.pages.length).fill(null);
+    }
+
+    function render() {
+      grid.innerHTML = '';
+      story.pages.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="thumb" id="thumb-${i}">
+            ${story.images[i] ? `<img src="${story.images[i]}" alt="">` : '이미지 없음'}
+          </div>
+          <div class="cap">${p || ''}</div>
+          <div class="foot">
+            <label class="chk">
+              <input type="checkbox" data-i="${i}" ${selected.has(i) ? 'checked':''}>
+              이 페이지 다시 생성
+            </label>
+            <button class="btn" data-rerun="${i}">다시 생성</button>
+          </div>
+        `;
+        grid.appendChild(card);
       });
     }
 
-    function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-
-    // 간단한 키워드 추출(이미지 프롬프트로 사용)
-    function pagesToKeywords(pages){
-      // 각 문장의 핵심 1~8단어 정도를 프롬프트로 사용
-      return pages.map(t => t.split(/\s+/).slice(0,8).join(' '));
-    }
-
-    // API 호출로 이미지 생성
-    async function generateImages(){
-      const btn = document.getElementById('btn-generate');
-      btn.disabled = true; btn.textContent = '생성 중...';
-      try{
-        const payload = {
-          keywords: pagesToKeywords(state.pages),
-          pages: state.pages.length,
-          withImages: true
-        };
-        const res = await fetch('/api/story', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if(!res.ok) throw new Error('이미지 생성 실패');
-        const data = await res.json();
-        state.images = Array.isArray(data.images) ? data.images : [];
-        renderImages();
-      }catch(err){
-        alert('오류: ' + err.message);
-      }finally{
-        btn.disabled = false; btn.textContent = '이미지 생성하기';
-      }
-    }
-
-    async function saveJson(){
+    async function callGenerate(onlyIdx = null) {
       const payload = {
-        title: state.title,
-        pages: state.pages,
-        images: state.images
+        pages: story.pages.slice(),
+        style: styleSel.value
       };
-      try{
-        const res = await fetch('/api/story/save', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
+      if (Array.isArray(onlyIdx) && onlyIdx.length) {
+        payload.only_indices = onlyIdx.slice();
+      }
+      const res = await fetch('/api/images/generate', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        alert('이미지 생성 실패');
+        return;
+      }
+      const data = await res.json();
+      // data.images: 길이가 pages와 같고, 새로 만든 자리만 URL, 나머지는 null
+      if (Array.isArray(data.images)) {
+        data.images.forEach((url, i) => {
+          if (url) story.images[i] = url;
         });
-        const data = await res.json();
-        if (data.saved) {
-          alert('저장 완료!\n' + (data.path || ''));
-        } else {
-          alert('저장 실패');
-        }
-      }catch(e){
-        alert('저장 중 오류: ' + e.message);
+        // UI 반영 & 저장
+        localStorage.setItem(KEY, JSON.stringify(story));
+        render();
+      } else {
+        alert('응답 형식 오류');
       }
     }
 
-    // 이벤트 바인딩
-    document.getElementById('btn-generate').addEventListener('click', generateImages);
-    document.getElementById('btn-save').addEventListener('click', saveJson);
-    document.getElementById('btn-print').addEventListener('click', () => window.print());
+    // 초기화
+    loadStory();
+    render();
 
-    // 시작
-    initFromParams();
-    renderImages();
+    // 전체 생성
+    document.getElementById('btnAll').addEventListener('click', () => callGenerate());
+
+    // 선택만 다시 생성
+    document.getElementById('btnSelected').addEventListener('click', () => {
+      if (selected.size === 0) {
+        alert('다시 생성할 페이지를 선택하세요.');
+        return;
+      }
+      callGenerate([...selected].sort((a,b)=>a-b));
+    });
+
+    // 각 카드의 체크/다시생성 버튼
+    grid.addEventListener('change', (e) => {
+      const i = e.target.getAttribute('data-i');
+      if (i !== null) {
+        const idx = parseInt(i, 10);
+        if (e.target.checked) selected.add(idx);
+        else selected.delete(idx);
+      }
+    });
+    grid.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-rerun]');
+      if (!btn) return;
+      const i = parseInt(btn.getAttribute('data-rerun'), 10);
+      callGenerate([i]);
+    });
+
+    // 저장(JSON)
+    document.getElementById('btnSave').addEventListener('click', async () => {
+      const res = await fetch('/api/story/save', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(story)
+      });
+      const data = await res.json();
+      alert(data && data.saved ? '저장 완료' : '저장 실패');
+    });
+
+    // 뒤로
+    document.getElementById('btnBack').addEventListener('click', () => {
+      localStorage.setItem(KEY, JSON.stringify(story));
+      window.location.href = '/editor';
+    });
   </script>
 </body>
 </html>

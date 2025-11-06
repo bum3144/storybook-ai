@@ -2,57 +2,64 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>새 스토리 만들기 - 모드 선택</title>
+  <title>새 스토리 만들기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: 'Arial', sans-serif; max-width: 960px; margin: 40px auto; background: #fafafa; }
-    a { text-decoration: none; color: inherit; }
-    header { display:flex; align-items:center; justify-content:space-between; }
-    .back { color:#666; }
-    h1 { margin: 0; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:24px; margin-top:28px; }
-    .card { background:#fff; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.08); padding:24px; }
-    .badge { display:inline-block; font-size:12px; background:#eef2ff; color:#3949ab; padding:4px 8px; border-radius:999px; margin-bottom:8px; }
-    h2 { margin:8px 0 12px; }
-    p { color:#555; line-height:1.6; }
-    .actions { margin-top:16px; }
-    .btn { display:inline-block; padding:10px 14px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; }
-    .btn.primary { background:#2e7d32; color:#fff; border-color:#2e7d32; }
-    .hint { margin-top:36px; color:#777; font-size:14px; }
+    :root {
+      --bg:#f7f8fa; --card:#fff; --txt:#111; --muted:#6b7280;
+      --primary:#16a34a; --primary-ink:#fff; --shadow:0 6px 20px rgba(0,0,0,.06);
+      --outline:#e5e7eb; --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,AppleSDGothicNeo,'Apple SD Gothic Neo','Noto Sans KR',Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:1080px;margin:36px auto;padding:0 20px}
+    h1{font-size:32px;margin:0 0 22px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{background:var(--card);border:1px solid var(--outline);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+    .kicker{display:inline-block;background:#eef2ff;color:#3730a3;font-weight:700;border-radius:999px;padding:6px 10px;font-size:12px;margin-bottom:10px}
+    .title{font-size:22px;margin:6px 0 10px}
+    .desc{color:var(--muted);line-height:1.6;margin:0 0 18px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{appearance:none;border:1px solid var(--outline);background:#fff;padding:10px 14px;border-radius:10px;font-size:15px;cursor:pointer}
+    .btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-ink);font-weight:700}
+    a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center;justify-content:center}
+    .back{display:inline-flex;align-items:center;font-size:14px;color:var(--muted);text-decoration:none;margin-bottom:10px}
   </style>
 </head>
 <body>
-  <header>
+  <div class="wrap">
     <a class="back" href="/dashboard">← 대시보드</a>
     <h1>새 스토리 만들기</h1>
-    <div></div>
-  </header>
 
-  <div class="grid">
-    <!-- 직접 쓰기 -->
-    <div class="card">
-      <div class="badge">직접 쓰기</div>
-      <h2>내가 스토리를 직접 작성할래요</h2>
-      <p>제목과 줄거리, 페이지별 문장을 직접 쓰며 글쓰기 능력을 키울 수 있어요.
-         간단한 에디터에서 페이지별 텍스트를 편집할 수 있습니다.</p>
-      <div class="actions">
-        <a class="btn" href="/editor?mode=manual">글 편집 단계로</a>
-      </div>
+    <div class="grid">
+      <!-- 직접 쓰기 -->
+      <section class="card">
+        <span class="kicker">직접 쓰기</span>
+        <h2 class="title">내가 스토리를 직접 작성할래요</h2>
+        <p class="desc">
+          제목과 줄거리, 페이지별 문장을 직접 작성합니다. 이후 이미지 생성 단계로 이동해
+          일러스트를 붙일 수 있어요.
+        </p>
+        <div class="row">
+          <!-- 직접 쓰기: mode=write -->
+          <a class="btn primary" href="/editor?mode=write">직접 쓰기</a>
+        </div>
+      </section>
+
+      <!-- AI와 함께 쓰기 -->
+      <section class="card">
+        <span class="kicker">추천</span>
+        <h2 class="title">AI와 함께 쓰기</h2>
+        <p class="desc">
+          키워드와 분위기를 입력하면 AI가 3~5페이지 분량의 추천 플롯을 채워줍니다.
+          이후 자유롭게 편집하고 이미지를 생성해요.
+        </p>
+        <div class="row">
+          <!-- AI 쓰기: mode=ai -->
+          <a class="btn primary" href="/editor?mode=ai">AI와 함께 쓰기</a>
+        </div>
+      </section>
     </div>
-
-    <!-- AI와 함께 -->
-    <div class="card">
-      <div class="badge">추천</div>
-      <h2>AI와 함께 쓸래요</h2>
-      <p>키워드와 분위기를 입력하면 AI가 3~5페이지 분량의 플롯/추천 스토리를 만들어줘요.
-         이후 페이지별 문장을 편집하고 이미지를 생성합니다.</p>
-      <div class="actions">
-        <a class="btn primary" href="/editor?mode=ai">시작하기</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="hint">
-    ※ 다음 단계에서 <strong>글 편집</strong> → <strong>이미지 생성</strong> → <strong>보기/저장</strong> 순서로 진행합니다.
   </div>
 </body>
 </html>

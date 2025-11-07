@@ -93,6 +93,8 @@
         <div class="field"><button id="btnAll" class="btn btn-primary btn-block">전체 이미지 생성</button></div>
         <div class="field"><button id="btnPartial" class="btn btn-outline btn-block">선택만 다시 생성</button></div>
         <div class="field"><button id="btnBack" class="btn btn-outline btn-block">글 편집으로</button></div>
+        <!-- 추가: 완성본 보기 -->
+        <div class="field"><button id="btnPreview" class="btn btn-outline btn-block" disabled>완성본 동화 보기</button></div>
 
         <p class="hint">
           페이지 수만큼 이미지를 생성합니다. 카드 상단은 기본적으로 <b>생성 전</b> 상태입니다.
@@ -128,168 +130,182 @@
     </div>
   </div>
 
-  <script>
-    // --- 엘리먼트
-    const grid = document.getElementById('grid');
-    const styleSel = document.getElementById('style');
-    const allBtn = document.getElementById('btnAll');
-    const partialBtn = document.getElementById('btnPartial');
-    const backBtn = document.getElementById('btnBack');
+<script>
+const grid = document.getElementById('grid');
+const styleSel = document.getElementById('style');
+const allBtn = document.getElementById('btnAll');
+const partialBtn = document.getElementById('btnPartial');
+const backBtn = document.getElementById('btnBack');
+const previewBtn = document.getElementById('btnPreview');
 
-    const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
-    const getCards = ()=> $$('.card', grid);
+const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+const getCards = ()=> $$('.card', grid);
 
-    // --- 상태 표시/로딩/업데이트
-    function setStatus(card, txt, cls){
-      const st = card.querySelector('[data-status]');
-      const overlayText = card.querySelector('[data-overlay-text]');
-      if (st){
-        st.textContent = txt;
-        st.classList.remove('ok','danger');
-        if (cls) st.classList.add(cls);
-      }
-      if (overlayText) overlayText.textContent = txt; // 오버레이 텍스트 동기화
-    }
+/* -------------------- 상태 표시 -------------------- */
+function setStatus(card, txt, cls){
+  const st = card.querySelector('[data-status]');
+  const overlayText = card.querySelector('[data-overlay-text]');
+  if (st) {
+    st.textContent = txt;
+    st.classList.remove('ok','danger');
+    if (cls) st.classList.add(cls);
+  }
+  if (overlayText) overlayText.textContent = txt;
+}
 
-    function setLoading(card, on){
-      const fig = card.querySelector('.figure');
-      const img = fig.querySelector('img');
-      if (on){
-        fig.classList.remove('ready'); // 완료 상태 해제 → 오버레이 보이도록
-        fig.classList.add('loading');  // CSS: 스피너 보임
-        setStatus(card, '생성 중…');    // 텍스트 변경
-        img.classList.remove('loaded');
-      } else {
-        fig.classList.remove('loading'); // 스피너 끔
-      }
-    }
+function setLoading(card, on){
+  const fig = card.querySelector('.figure');
+  const img = fig.querySelector('img');
+  if (on){
+    fig.classList.remove('ready');
+    fig.classList.add('loading');
+    setStatus(card, '생성 중…');
+    img.classList.remove('loaded');
+  } else {
+    fig.classList.remove('loading');
+  }
+}
 
-    function updateImage(card, url){
-      const fig = card.querySelector('.figure');
-      const img = fig.querySelector('img');
+function updateImage(card, url){
+  const fig = card.querySelector('.figure');
+  const img = fig.querySelector('img');
+  if (!url){
+    setLoading(card, false);
+    setStatus(card, '로드 실패', 'danger');
+    return;
+  }
+  if (img.src === url){
+    img.classList.add('loaded');
+    fig.classList.add('ready');
+    setLoading(card, false);
+    setStatus(card, '');
+    maybeEnablePreview(); // ✅ 추가
+    return;
+  }
+  img.onload = () => {
+    img.classList.add('loaded');
+    fig.classList.add('ready');
+    setLoading(card, false);
+    setStatus(card, '');
+    maybeEnablePreview(); // ✅ 추가
+  };
+  img.onerror = () => {
+    setLoading(card, false);
+    setStatus(card, '로드 실패', 'danger');
+  };
+  fig.classList.remove('ready');
+  img.src = url;
+}
 
-      if (!url){
-        setLoading(card, false);
-        setStatus(card, '로드 실패', 'danger');
-        fig.classList.remove('ready'); // 실패면 오버레이 계속 보이게
-        return;
-      }
+/* -------------------- 미리보기 버튼 활성화 -------------------- */
+function allLoaded(){
+  return getCards().every(c=>{
+    const img=c.querySelector('.figure img');
+    return !!img.src && img.classList.contains('loaded');
+  });
+}
+function maybeEnablePreview(){
+  if(allLoaded()) previewBtn.disabled=false;
+}
 
-      // 동일 URL이면 깜빡임 방지
-      if (img.src === url){
-        img.classList.add('loaded');
-        fig.classList.add('ready');    // 완료 → 오버레이 숨김
-        setLoading(card, false);
-        setStatus(card, '');            // 텍스트 비움
-        return;
-      }
+/* -------------------- API 호출 -------------------- */
+function payloadFrom(cards){
+  return {
+    style: styleSel.value,
+    pages: cards.map(c=>({
+      index: parseInt(c.dataset.index,10),
+      text: (c.dataset.text||'').trim()
+    }))
+  };
+}
+async function callGenerate(body){
+  const res = await fetch('/api/images/generate',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error('API '+res.status);
+  const data=await res.json();
+  return Array.isArray(data.images)?data.images:[];
+}
 
-      img.onload = () => {
-        img.classList.add('loaded');   // 100% 선명
-        fig.classList.add('ready');    // 완료 → 오버레이 숨김
-        setLoading(card, false);
-        setStatus(card, '');           // 텍스트 비움
-      };
-      img.onerror = () => {
-        setLoading(card, false);
-        setStatus(card, '로드 실패', 'danger');
-        fig.classList.remove('ready');
-      };
-
-      fig.classList.remove('ready');   // 새 로딩 시작: 오버레이 보이도록
-      img.src = url;
-    }
-
-    // --- 페이로드/호출
-    function payloadFrom(cards){
-      return {
-        style: styleSel.value,
-        pages: cards.map(c => ({
-          index: parseInt(c.dataset.index,10),
-          text: (c.dataset.text||'').trim()
-        }))
-      };
-    }
-
-    async function callGenerate(body){
-      const res = await fetch('/api/images/generate', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(body)
-      });
-      if (!res.ok) throw new Error('API '+res.status);
-      const data = await res.json();
-      return Array.isArray(data.images) ? data.images : [];
-    }
-
-    // --- 액션
-    async function generateAll(){
-      const cards = getCards();
-      if (!cards.length) return;
-      cards.forEach(c => setLoading(c, true));  // 클릭 즉시 로딩 진입
-      try{
-        const images = await callGenerate(payloadFrom(cards));
-        const byIdx = new Map(images.map(x => [Number(x.index), x.url]));
-        cards.forEach(card => updateImage(card, byIdx.get(Number(card.dataset.index))));
-      }catch(e){
-        cards.forEach(c => { setLoading(c,false); setStatus(c,'요청 실패','danger'); });
-      }
-    }
-
-    async function generateSelected(){
-      const selected = getCards().filter(c => c.querySelector('.ck').checked);
-      if (!selected.length){ alert('다시 생성할 카드를 체크하세요.'); return; }
-      selected.forEach(c => setLoading(c,true));
-      try{
-        const images = await callGenerate(payloadFrom(selected));
-        const byIdx = new Map(images.map(x => [Number(x.index), x.url]));
-        selected.forEach(card => {
-          updateImage(card, byIdx.get(Number(card.dataset.index)));
-          card.querySelector('.ck').checked = false;
-        });
-      }catch(e){
-        selected.forEach(c => { setLoading(c,false); setStatus(c,'요청 실패','danger'); });
-      }
-    }
-
-    async function generateOne(card){
-      setLoading(card, true);
-      try{
-        const images = await callGenerate(payloadFrom([card]));
-        const url = (images[0] && images[0].url) ? images[0].url : '';
-        updateImage(card, url);
-      }catch(e){
-        setLoading(card, false);
-        setStatus(card, '요청 실패', 'danger');
-      }
-    }
-
-    // --- 이벤트 (중복 방지)
-    if (!allBtn.dataset.bound){
-      allBtn.dataset.bound='1';
-      allBtn.addEventListener('click', e => { e.preventDefault(); generateAll(); });
-    }
-    if (!partialBtn.dataset.bound){
-      partialBtn.dataset.bound='1';
-      partialBtn.addEventListener('click', e => { e.preventDefault(); generateSelected(); });
-    }
-    if (!backBtn.dataset.bound){
-      backBtn.dataset.bound='1';
-      backBtn.addEventListener('click', e => {
-        e.preventDefault();
-        // 직접쓰기 화면으로
-        window.location.href = "/editor?mode=write";
-      });
-    }
-
-    // 카드 개별 버튼 + 초기 “생성 전” 세팅
-    getCards().forEach(card=>{
-      if (card.dataset.bound) return;
-      card.dataset.bound='1';
-      const retry = card.querySelector('[data-action="retry"]');
-      retry.addEventListener('click', e => { e.preventDefault(); generateOne(card); });
-      setStatus(card, '생성 전'); // 초기 텍스트(스피너는 숨김)
+/* -------------------- 이미지 생성 로직 -------------------- */
+async function generateAll(){
+  const cards=getCards();
+  if(!cards.length)return;
+  cards.forEach(c=>setLoading(c,true));
+  try{
+    const images=await callGenerate(payloadFrom(cards));
+    const byIdx=new Map(images.map(x=>[Number(x.index),x.url]));
+    cards.forEach(card=>{
+      updateImage(card,byIdx.get(Number(card.dataset.index)));
     });
-  </script>
+    maybeEnablePreview(); // ✅ 전체 완료 후
+  }catch(e){
+    cards.forEach(c=>{setLoading(c,false);setStatus(c,'요청 실패','danger');});
+  }
+}
+
+async function generateSelected(){
+  const selected=getCards().filter(c=>c.querySelector('.ck').checked);
+  if(!selected.length){alert('다시 생성할 카드를 체크하세요.');return;}
+  selected.forEach(c=>setLoading(c,true));
+  try{
+    const images=await callGenerate(payloadFrom(selected));
+    const byIdx=new Map(images.map(x=>[Number(x.index),x.url]));
+    selected.forEach(card=>{
+      updateImage(card,byIdx.get(Number(card.dataset.index)));
+      card.querySelector('.ck').checked=false;
+    });
+    maybeEnablePreview(); // ✅ 추가
+  }catch(e){
+    selected.forEach(c=>{setLoading(c,false);setStatus(c,'요청 실패','danger');});
+  }
+}
+
+async function generateOne(card){
+  setLoading(card,true);
+  try{
+    const images=await callGenerate(payloadFrom([card]));
+    const url=(images[0]&&images[0].url)?images[0].url:'';
+    updateImage(card,url);
+    maybeEnablePreview(); // ✅ 추가
+  }catch(e){
+    setLoading(card,false);
+    setStatus(card,'요청 실패','danger');
+  }
+}
+
+/* -------------------- 이벤트 -------------------- */
+if(!allBtn.dataset.bound){
+  allBtn.dataset.bound='1';
+  allBtn.addEventListener('click',e=>{e.preventDefault();generateAll();});
+}
+if(!partialBtn.dataset.bound){
+  partialBtn.dataset.bound='1';
+  partialBtn.addEventListener('click',e=>{e.preventDefault();generateSelected();});
+}
+if(!backBtn.dataset.bound){
+  backBtn.dataset.bound='1';
+  backBtn.addEventListener('click',e=>{e.preventDefault();window.location.href="/editor?mode=write";});
+}
+if(!previewBtn.dataset.bound){
+  previewBtn.dataset.bound='1';
+  previewBtn.addEventListener('click',e=>{
+    e.preventDefault();
+    window.location.href="/preview";
+  });
+}
+
+/* -------------------- 카드 초기 상태 -------------------- */
+getCards().forEach(card=>{
+  if(card.dataset.bound)return;
+  card.dataset.bound='1';
+  const retry=card.querySelector('[data-action="retry"]');
+  retry.addEventListener('click',e=>{e.preventDefault();generateOne(card);});
+  setStatus(card,'생성 전');
+});
+</script>
+
 </body>
 </html>

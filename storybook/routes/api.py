@@ -95,45 +95,40 @@ def _safe_url(primary_url: str, idx: int, tries: int = 2) -> str:
 
 @api_bp.post("/images/generate")
 def images_generate():
-    """
-    요청:
-      { "style": "...", "pages": [{ "index": 1, "text": "..." }, ...] }
-    또는 (프론트가 빈 바디로 보내면) 세션에 캐시된 story_style/story_pages 를 자동 사용.
-    응답:
-      { "images": [{ "index": 1, "url": "..." }, ...] }
-    """
     payload = request.get_json(silent=True) or {}
-
-    # 세션 캐시를 백업 소스로 활용 (빈 요청일 때 대비)
-    pages = payload.get("pages")
-    style = payload.get("style")
-    if not pages:
-        pages = session.get("story_pages") or []
-    if not style:
-        style = (session.get("story_style") or "").strip()
-    else:
-        style = (style or "").strip()
+    pages_in = payload.get("pages") or []
+    style = (payload.get("style") or "").strip()
 
     out = []
-    for p in pages:
+    preview_pages = []  # <-- 미리보기 저장용
+
+    for p in pages_in:
         try:
             idx = int(p.get("index"))
         except Exception:
             continue
-
         text = (p.get("text") or "").strip()
-        # 같은 입력이면 항상 동일 seed => 깜박이며 다른 그림으로 바뀌는 현상 완화
+
         seed_src = f"{style}|{text}|{idx}"
         seed = hashlib.sha1(seed_src.encode("utf-8")).hexdigest()[:12]
         primary = PICSUM_TMPL.format(seed=seed)
-
-        # 가용성 점검 + 재시도 + placeholder 대체
         url = _safe_url(primary, idx, tries=2)
-        out.append({"index": idx, "url": url})
 
-        # 너무 급격한 동시 타격 방지(소폭)
+        out.append({"index": idx, "url": url})
+        preview_pages.append({"index": idx, "text": text, "url": url})
+
         time.sleep(0.02)
 
-    # index 오름차순 정렬(보기 좋게)
     out.sort(key=lambda x: x["index"])
+    preview_pages.sort(key=lambda x: x["index"])
+
+    # 에디터에서 저장한 초안에서 제목 가져오기
+    title = ""
+    draft = session.get("draft") or {}
+    if isinstance(draft, dict):
+        title = draft.get("title", "")
+
+    # 세션에 미리보기 저장
+    session["preview"] = {"title": title, "pages": preview_pages}
+
     return jsonify({"images": out}), 200

@@ -1,7 +1,16 @@
-# -*- coding: utf-8 -*-
-from flask import Blueprint, render_template, request, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 
 ui_bp = Blueprint("ui", __name__)
+
+@ui_bp.get("/preview")
+def preview():
+    data = session.get("preview")  # {'title': str, 'pages': [{'index', 'text', 'url'}]}
+    if not data or not data.get("pages"):
+        # 이미지가 아직 없으면 이미지 생성 화면으로
+        return redirect(url_for("ui.images"))
+    # index 오름차순 보장
+    pages = sorted(data["pages"], key=lambda x: x["index"])
+    return render_template("preview.html", title=data.get("title", ""), pages=pages)
 
 # 새 스토리 선택(대시보드에서 오는 진입점)
 @ui_bp.get("/new")

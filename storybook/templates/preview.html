@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{{ title or "완성본 동화" }}</title>
+  <style>
+    :root { --border:#e5e7eb; --muted:#6b7280; --brand:#2563eb; }
+    *{box-sizing: border-box}
+    body{margin:0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; color:#111827; background:#fff}
+    .wrap{max-width:1200px; margin:24px auto; padding:0 16px}
+    .header{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
+    .title{font-size:20px; font-weight:700}
+    .topbar a{color:#374151; text-decoration:none; border:1px solid var(--border); padding:8px 12px; border-radius:10px}
+
+    .viewer{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:center; border:1px solid var(--border); border-radius:14px; padding:18px; min-height:520px}
+    .imgbox{width:100%; aspect-ratio:4/5; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#f8fafc}
+    .imgbox img{width:100%; height:100%; object-fit:cover; display:block}
+    .textbox{line-height:1.8; font-size:16px; white-space:pre-wrap}
+
+    .nav{position:relative}
+    .arrow{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:999px; border:1px solid var(--border); background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer}
+    .arrow.left{left:-62px}
+    .arrow.right{right:-62px}
+
+    .thumbs{display:flex; gap:10px; overflow-x:auto; padding:14px 0; margin-top:14px; border-top:1px solid var(--border)}
+    .thumb{flex:0 0 120px; border:2px solid transparent; border-radius:10px; cursor:pointer; background:#f8fafc}
+    .thumb img{width:100%; aspect-ratio:4/5; object-fit:cover; display:block; border-radius:8px}
+    .thumb.active{border-color:var(--brand)}
+    .caption{font-size:13px; color:var(--muted); margin-top:6px; text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="title">📖 {{ title or "완성본 동화" }}</div>
+      <div class="topbar">
+        <a href="/images">← 이미지 생성으로</a>
+      </div>
+    </div>
+
+    <div class="viewer nav">
+      <button class="arrow left" id="prevBtn">‹</button>
+      <div class="imgbox"><img id="bigImg" alt="page image"/></div>
+      <div class="textbox" id="bigText"></div>
+      <button class="arrow right" id="nextBtn">›</button>
+    </div>
+
+    <div class="thumbs" id="thumbs">
+      {% for p in pages %}
+      <div class="thumb" data-index="{{ p.index }}">
+        <img src="{{ p.url }}" alt="p{{ p.index }}"/>
+        <div class="caption">{{ p.index }}. {{ p.text or '' }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script>
+    const pages = {{ pages|tojson }};
+    const bigImg = document.getElementById('bigImg');
+    const bigText = document.getElementById('bigText');
+    const thumbs = document.getElementById('thumbs');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    let cur = 0;
+
+    function render(i){
+      cur = Math.max(0, Math.min(pages.length-1, i));
+      const p = pages[cur];
+      bigImg.src = p.url || '';
+      bigText.textContent = p.text || '';
+      Array.from(thumbs.children).forEach((t,idx)=>{
+        if(idx===cur) t.classList.add('active'); else t.classList.remove('active');
+      });
+    }
+
+    prevBtn.addEventListener('click', ()=> render(cur-1));
+    nextBtn.addEventListener('click', ()=> render(cur+1));
+
+    Array.from(thumbs.children).forEach((t,idx)=>{
+      t.addEventListener('click', ()=> render(idx));
+    });
+
+    // 키보드 네비게이션
+    window.addEventListener('keydown', (e)=>{
+      if(e.key==='ArrowLeft') render(cur-1);
+      if(e.key==='ArrowRight') render(cur+1);
+    });
+
+    render(0);
+  </script>
+</body>
+</html>

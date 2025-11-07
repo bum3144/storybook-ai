@@ -67,6 +67,7 @@
       <hr style="border:none;border-top:1px solid #eee;"/>
       <div class="spacer"></div>
 
+<section id="aiSection">
       <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
 
       <label>키워드 (쉼표로 구분)</label>
@@ -89,6 +90,7 @@
       <div class="spacer"></div>
       <hr style="border:none;border-top:1px solid #eee;"/>
       <div class="spacer"></div>
+</section>
 
       <div class="btnbar">
         <!-- 1줄: 이전/대시보드/임시 저장 -->
@@ -122,7 +124,8 @@
 <script>
 (function(){
   /* -------------------- 상태 -------------------- */
-  var MODE = (new URL(location.href).searchParams.get('mode')||'write').toLowerCase()==='ai' ? 'ai' : 'direct';
+  // URL 파라미터로 모드 결정: ?mode=ai → 'ai', 그 외는 'direct'
+  var MODE = (new URL(location.href).searchParams.get('mode') || 'write').toLowerCase() === 'ai' ? 'ai' : 'direct';
   var MAX_PAGES = 5;
   var DEFAULT_COUNT = 3;
 
@@ -142,45 +145,6 @@
     btnToggleMode: document.getElementById('btnToggleMode'),
     modePill: document.getElementById('modePill')
   };
-
-
-    /* -------------------- 상태 -------------------- */
-  var MODE = 'direct'; // 'direct' | 'ai'
-  var MAX_PAGES = 5;
-  var DEFAULT_COUNT = 3;
-
-  var el = {
-    title: document.getElementById('titleInput'),
-    pageCount: document.getElementById('pageCountInput'),
-    pagesWrap: document.getElementById('pagesWrap'),
-    btnAdd: document.getElementById('btnAddPage'),
-    btnDel: document.getElementById('btnDelPage'),
-    keyword: document.getElementById('keywordInput'),
-    autoAdjust: document.getElementById('autoAdjustChk'),
-    btnAiPlot: document.getElementById('btnAiPlot'),
-    btnPrev: document.getElementById('btnPrev'),
-    btnHome: document.getElementById('btnHome'),
-    btnSave: document.getElementById('btnSave'),
-    btnToImages: document.getElementById('btnToImages'),
-    btnToggleMode: document.getElementById('btnToggleMode'),
-    modePill: document.getElementById('modePill')
-  };
-
-  /* ✅ URL 파라미터로 모드 강제 */
-  (function initModeFromQuery(){
-    var q = new URLSearchParams(location.search);
-    var m = (q.get('mode')||'').toLowerCase();
-    if (m === 'ai') MODE = 'ai'; else MODE = 'direct';
-    // UI 반영
-    if (MODE === 'ai'){
-      el.btnToggleMode.textContent = '직접쓰기';
-      el.modePill.textContent = 'AI와 함께 쓰기';
-    } else {
-      el.btnToggleMode.textContent = 'AI와 함께 쓰기';
-      el.modePill.textContent = '직접 쓰기';
-    }
-  })();
-
 
   /* -------------------- 유틸 -------------------- */
   function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
@@ -219,13 +183,34 @@
   }
   function toast(msg){ try{ alert(msg); }catch(e){} }
 
+  /* -------------------- 모드 UI 반영 -------------------- */
+  function applyModeUI(){
+  var aiSection = document.getElementById('aiSection');
+
+      if (MODE === 'ai'){
+        // 라벨
+        el.btnToggleMode.textContent = '직접쓰기';
+        el.modePill.textContent = 'AI와 함께 쓰기';
+        // AI 섹션 표시
+        if (aiSection) {
+          aiSection.classList.remove('hidden');
+          aiSection.setAttribute('aria-hidden','false');
+        }
+      } else {
+        // 라벨
+        el.btnToggleMode.textContent = 'AI와 함께 쓰기';
+        el.modePill.textContent = '직접 쓰기';
+        // AI 섹션 숨김
+        if (aiSection) {
+          aiSection.classList.add('hidden');
+          aiSection.setAttribute('aria-hidden','true');
+        }
+      }
+  }
+
   /* -------------------- 초기 -------------------- */
   (function init(){
-    // 모드 배지
-    if (MODE === 'ai') {
-      el.btnToggleMode.textContent = '직접쓰기';
-      el.modePill.textContent = 'AI와 함께 쓰기';
-    }
+    applyModeUI();
 
     // 임시 저장 복구
     try {
@@ -267,8 +252,7 @@
   // 모드 토글
   el.btnToggleMode.addEventListener('click', function(){
     MODE = (MODE === 'direct') ? 'ai' : 'direct';
-    if (MODE === 'ai'){ el.btnToggleMode.textContent = '직접쓰기'; el.modePill.textContent = 'AI와 함께 쓰기'; }
-    else { el.btnToggleMode.textContent = 'AI와 함께 쓰기'; el.modePill.textContent = '직접 쓰기'; }
+    applyModeUI();
   });
 
   // 임시 저장
@@ -320,9 +304,7 @@
     location.href = '/images';
   }
 
-  // “이미지 생성” 버튼에 후킹
   el.btnToImages.addEventListener('click', function(e){ e.preventDefault(); goImages(); });
-
 })();
 </script>
 </body>

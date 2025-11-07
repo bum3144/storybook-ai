@@ -1,96 +1,59 @@
-# storybook/routes/ui.py
-from __future__ import annotations
+# -*- coding: utf-8 -*-
+from flask import Blueprint, render_template, request, session, jsonify
 
-from flask import Blueprint, render_template, request, session
+ui_bp = Blueprint("ui", __name__)
 
-ui_bp = Blueprint("ui", __name__, template_folder="../templates", static_folder="../static")
-
-
-@ui_bp.get("/")
-def home():
-    return (
-        "AI 그림동화 생성기 서버가 실행 중입니다.<br/>👉 "
-        '<a href="/dashboard">/dashboard</a> 로 이동하세요.'
-    )
-
-
-@ui_bp.get("/dashboard")
-def dashboard():
-    """
-    대시보드 화면.
-    - 샘플/저장본 리스트 + “+ 새 스토리 만들기” 버튼
-    - 템플릿: dashboard.html
-    """
-    return render_template("dashboard.html")
-
-
+# 새 스토리 선택(대시보드에서 오는 진입점)
 @ui_bp.get("/new")
-def new_story_entry():
-    """
-    새 스토리 만들기 화면.
-    - '직접 쓰기' / 'AI와 함께 쓰기' 카드 2개
-    - 템플릿: new.html
-    """
+def new():
     return render_template("new.html")
 
+# 대시보드(프로젝트 홈)
+@ui_bp.get("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
 
+# 글 편집기 (mode=write | mode=ai)
 @ui_bp.get("/editor")
 def editor():
-    """
-    글 편집 화면.
-    - mode=write : '직접 쓰기' (AI 추천 섹션 숨김)
-    - mode=ai    : 'AI와 함께 쓰기' (AI 추천 섹션 표시)
-    """
-    mode = (request.args.get("mode") or "ai").strip().lower()
-    if mode not in ("ai", "write"):
-        mode = "ai"
+    mode = (request.args.get("mode") or "write").lower()
+    return render_template("editor.html", mode=mode)
 
-    draft = session.get("draft") or {
-        "title": "",
-        "pages": [],
-        "page_count": 3,
-        "keywords": "",
+# 에디터 → 이미지 단계로 넘길 캐시 저장 (세션)
+@ui_bp.post("/editor/cache")
+def editor_cache():
+    data = request.get_json(silent=True) or {}
+    title = (data.get("title") or "").strip()
+    pages = data.get("pages") or []
+    count = int(data.get("count") or len(pages) or 0)
+
+    # 방어
+    pages = [str(p or "").strip() for p in pages][:5]
+    if count <= 0:
+        count = len(pages)
+
+    session["editor_cache"] = {
+        "title": title,
+        "pages": pages,
+        "count": count,
     }
+    session.modified = True
+    return jsonify({"ok": True})
 
-    try:
-        page_count = int(draft.get("page_count", 3))
-    except Exception:
-        page_count = 3
-    page_count = max(1, min(page_count, 5))
-
-    pages = list(draft.get("pages") or [])
-    if len(pages) < page_count:
-        pages += [""] * (page_count - len(pages))
-    else:
-        pages = pages[:page_count]
-
-    return render_template(
-        "editor.html",
-        mode=mode,
-        title=draft.get("title", ""),
-        page_count=page_count,
-        pages=pages,
-        keywords=draft.get("keywords", ""),
-    )
-
-
+# 이미지 생성 페이지
 @ui_bp.get("/images")
 def images():
-    """
-    이미지 생성 화면. 세션 임시 저장본에서 페이지 텍스트 사용.
-    """
-    draft = session.get("draft") or {}
-    pages = (draft.get("pages") or [])[:5]
+    cache = session.get("editor_cache") or {}
+    pages = cache.get("pages") or []
+    count = int(cache.get("count") or len(pages) or 0)
+    title = cache.get("title") or ""
 
-    styles = [
-        "동화 일러스트 (기본)",
-        "연필 스케치",
-        "수채화 파스텔",
-        "평면 벡터",
-    ]
+    # 페이지 인덱스/텍스트 형태로 템플릿에 넘김
+    page_items = [{"index": i+1, "text": (pages[i] if i < len(pages) else "")}
+                  for i in range(max(count, len(pages), 0))]
 
-    return render_template(
-        "images.html",
-        pages=pages,
-        styles=styles,
-    )
+    # 스타일 드롭다운 기본값은 템플릿에서 처리
+    return render_template("images.html",
+                           title=title,
+                           pages=page_items,
+                           style="동화 일러스트 (기본)")

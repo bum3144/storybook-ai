@@ -1,318 +1,329 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>글 편집</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{
-      --brand:#2f67ff;
-      --ink:#0b1220;
-      --sub:#5d667b;
-      --bg:#f6f8fb;
-      --card:#ffffff;
-      --line:#e5e9f0;
-      --green:#16a34a;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; padding:32px;
-      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-      color:var(--ink); background:var(--bg);
-    }
-    h1{font-size:24px; margin:4px 0 24px;}
-    .wrap{display:grid; grid-template-columns:360px 1fr; gap:24px;}
-    .card{
-      background:var(--card); border:1px solid var(--line);
-      border-radius:14px; padding:18px;
-    }
-    .section-title{font-weight:700; margin:2px 0 10px;}
-    label{display:block; font-size:14px; color:var(--sub); margin-bottom:6px;}
-    input[type="text"], input[type="number"], textarea{
-      width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px;
-      font-size:15px; background:#fff; outline:none;
-    }
-    textarea{min-height:110px; resize:vertical;}
-    .hint{font-size:12px; color:var(--sub); margin-top:6px;}
-    .row{display:flex; gap:10px; align-items:center;}
-    .badge{font-size:12px; color:#fff; background:#7c3aed; padding:2px 7px; border-radius:999px;}
-    .btn{
-      display:inline-flex; justify-content:center; align-items:center; gap:8px;
-      border-radius:10px; font-weight:700; cursor:pointer; border:1px solid var(--line);
-      background:#fff; color:var(--ink); height:42px; padding:0 14px; user-select:none;
-    }
-    .btn.primary{background:var(--brand); color:#fff; border-color:var(--brand);}
-    .btn.ghost{background:#fff;}
-    .btn.success{background:var(--green); color:#fff; border-color:var(--green);}
-    .btn:disabled{opacity:.5; cursor:not-allowed;}
-    .list-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
-    .pages{display:flex; flex-direction:column; gap:12px;}
-    .pagebox{border:1px solid var(--line); border-radius:12px; padding:12px;}
-    .pagebox h4{margin:0 0 8px; font-size:14px; color:var(--sub);}
-    .toolbar{display:flex; gap:10px; margin-top:10px;}
-    .divider{height:1px; background:var(--line); margin:14px 0;}
-    .hidden{display:none !important;}
+    :root { --gap:24px; --brand:#2563eb; --muted:#6b7280; }
+    body { font-family: -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif; background:#fff; color:#111827; }
+    .wrap { max-width:1200px; margin:0 auto; padding:24px; }
+    h1 { font-size:24px; margin:0 0 18px; display:flex; align-items:center; gap:10px; }
+    .grid { display:grid; grid-template-columns:340px 1fr; gap:28px; }
 
-    /* 하단 버튼 2줄 레이아웃 */
-    .footer{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
-    .footer-line{display:flex; gap:12px; flex-wrap:nowrap;}
-    .footer-line .btn{flex:1 1 0;}
-    .footer-line .btn.shrink{flex:0 0 auto;}
-    @media (max-width:980px){
-      .wrap{grid-template-columns:1fr;}
+    .panel { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:18px; }
+    .panel h2 { font-size:16px; margin:0 0 12px; }
+    .muted { color:var(--muted); font-size:13px; }
+
+    label { display:block; font-size:13px; color:#374151; margin:10px 0 6px; }
+    input[type="text"], input[type="number"], textarea, select {
+      width:100%; box-sizing:border-box; border:1px solid #d1d5db; border-radius:10px;
+      padding:10px 12px; font-size:14px; background:#fff;
     }
+    textarea { height:120px; resize:vertical; }
+
+    .btnbar { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn {
+      border:1px solid #d1d5db; background:#f8f9fb; padding:10px 14px; border-radius:10px;
+      cursor:pointer; font-size:14px;
+    }
+    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
+    .btn.ghost { background:#fff; }
+    .btn.success { background:#10b981; color:#fff; border-color:#10b981; }
+    .btn.warn { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+
+    .pages { display:flex; flex-direction:column; gap:16px; }
+    .page-box { border:1px dashed #e5e7eb; border-radius:12px; padding:14px; }
+    .page-title { font-weight:600; margin-bottom:8px; }
+
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .spacer { height:10px; }
+
+    .mode-pill { display:inline-flex; gap:8px; align-items:center; font-size:13px; padding:3px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; }
+    .hidden { display:none !important; }
   </style>
 </head>
 <body>
-  <h1>📝 글 편집</h1>
+<div class="wrap">
+  <h1>📝 글 편집 <span id="modePill" class="mode-pill">직접 쓰기</span></h1>
 
-  <div class="wrap">
+  <div class="grid">
+    <!-- 좌측: 기본 정보 + AI 추천 받기 -->
+    <div class="panel">
+      <h2>기본 정보</h2>
 
-    <!-- 좌측: 기본 정보 + AI 추천 -->
-    <div class="card">
-      <div class="section-title">기본 정보</div>
+      <label>제목</label>
+      <input id="titleInput" type="text" placeholder="예: 지환이의 모험 일기"/>
 
-      <div style="margin-bottom:14px;">
-        <label for="title">제목</label>
-        <input id="title" type="text" placeholder="예: 지환이의 모험 일기" />
+      <div class="row">
+        <div style="flex:1">
+          <label>페이지 수 (1~5)</label>
+          <input id="pageCountInput" type="number" min="1" max="5" value="3"/>
+          <div class="muted">페이지 수를 바꾸면 편집 영역이 자동으로 맞춰집니다.</div>
+        </div>
       </div>
 
-      <div style="margin-bottom:14px;">
-        <label for="pageCount">페이지 수 (1~5)</label>
-        <input id="pageCount" type="number" value="3" min="1" max="5" />
-        <div class="hint">페이지 수를 바꾸면 편집 영역이 자동으로 맞춰집니다.</div>
+      <div class="spacer"></div>
+      <hr style="border:none;border-top:1px solid #eee;"/>
+      <div class="spacer"></div>
+
+      <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
+
+      <label>키워드 (쉼표로 구분)</label>
+      <input id="keywordInput" type="text" placeholder="예: 씨앗, 숲, 친구"/>
+
+      <div class="row" style="margin-top:8px">
+        <label style="display:flex; align-items:center; gap:8px; margin:0">
+          <input id="autoAdjustChk" type="checkbox" checked/>
+          키워드 개수에 맞춰 페이지 수 자동 조정
+        </label>
+        <span class="muted">(최대 5페이지)</span>
       </div>
 
-      <!-- AI 추천: mode=ai 일 때만 노출 -->
-      <div id="aiSection" class="card" style="padding:14px; margin-top:10px;">
-        <div class="row" style="margin-bottom:10px;">
-          <div class="section-title" style="margin:0;">AI 추천 받기</div>
-          <span class="badge">AI</span>
-        </div>
-        <label for="keywords">키워드 (쉼표로 구분)</label>
-        <input id="keywords" type="text" placeholder="예: 씨앗, 숲, 친구" />
-        <div class="row" style="margin:8px 0;">
-          <input id="autoAdjust" type="checkbox" checked />
-          <label for="autoAdjust" style="margin:0;">키워드 개수에 맞춰 페이지 수 자동 조정</label>
-        </div>
-        <button id="btnAI" class="btn primary" style="width:100%;">AI로 추천 플롯 생성</button>
-        <div class="hint">지금은 간단한 목업 모델을 사용합니다. 실제 Gemini/Imagen은 다음 단계 연동.</div>
+      <div class="spacer"></div>
+      <button id="btnAiPlot" class="btn primary" style="width:100%">AI로 추천 플롯 생성</button>
+
+      <div class="spacer"></div>
+      <div class="muted">※ 현재는 간단한 목업 모델을 사용합니다. (실제 Gemini/Imagen은 다음 단계 연동)</div>
+
+      <div class="spacer"></div>
+      <hr style="border:none;border-top:1px solid #eee;"/>
+      <div class="spacer"></div>
+
+      <div class="btnbar">
+        <!-- 1줄: 이전/대시보드/임시 저장 -->
+        <button id="btnPrev"    class="btn ghost">이전페이지</button>
+        <button id="btnHome"    class="btn ghost">대시보드</button>
+        <button id="btnSave"    class="btn warn">임시 저장</button>
       </div>
 
-      <!-- 하단 버튼 2줄 -->
-      <div class="footer">
-        <!-- 1줄: [이전페이지] [대시보드] [임시 저장] -->
-        <div class="footer-line">
-          <button id="btnBackPage" class="btn ghost">이전페이지</button>
-          <button id="btnBack" class="btn ghost">대시보드</button>
-          <button id="btnDraft" class="btn">임시 저장</button>
-        </div>
-        <!-- 2줄: [모드 전환] [이미지 생성] -->
-        <div class="footer-line">
-          <button id="btnSwitchMode" class="btn"></button>
-          <button id="btnToImages" class="btn success">이미지 생성</button>
-        </div>
+      <div class="spacer"></div>
+      <div class="btnbar">
+        <!-- 2줄: 모드 토글 + 이미지 생성 -->
+        <button id="btnToggleMode" class="btn">AI와 함께 쓰기</button>
+        <button id="btnToImages"   class="btn success" data-action="to-images">이미지 생성</button>
       </div>
     </div>
 
     <!-- 우측: 페이지별 문장 -->
-    <div class="card">
-      <div class="list-head">
-        <div class="section-title">페이지별 문장</div>
-        <div class="toolbar">
-          <button id="btnAdd" class="btn ghost shrink">+ 페이지 추가</button>
-          <button id="btnRemove" class="btn ghost shrink">- 페이지 제거</button>
-        </div>
+    <div class="panel">
+      <h2>페이지별 문장</h2>
+      <div id="pagesWrap" class="pages"></div>
+
+      <div class="spacer"></div>
+      <div class="btnbar">
+        <button id="btnAddPage" class="btn">+ 페이지 추가</button>
+        <button id="btnDelPage" class="btn">- 페이지 제거</button>
       </div>
-      <div id="pages" class="pages"></div>
     </div>
-
   </div>
+</div>
 
-  <script>
-    // 쿼리 읽기
-    function getQuery(key){
-      const u = new URL(location.href);
-      return u.searchParams.get(key);
+<script>
+(function(){
+  /* -------------------- 상태 -------------------- */
+  var MODE = (new URL(location.href).searchParams.get('mode')||'write').toLowerCase()==='ai' ? 'ai' : 'direct';
+  var MAX_PAGES = 5;
+  var DEFAULT_COUNT = 3;
+
+  var el = {
+    title: document.getElementById('titleInput'),
+    pageCount: document.getElementById('pageCountInput'),
+    pagesWrap: document.getElementById('pagesWrap'),
+    btnAdd: document.getElementById('btnAddPage'),
+    btnDel: document.getElementById('btnDelPage'),
+    keyword: document.getElementById('keywordInput'),
+    autoAdjust: document.getElementById('autoAdjustChk'),
+    btnAiPlot: document.getElementById('btnAiPlot'),
+    btnPrev: document.getElementById('btnPrev'),
+    btnHome: document.getElementById('btnHome'),
+    btnSave: document.getElementById('btnSave'),
+    btnToImages: document.getElementById('btnToImages'),
+    btnToggleMode: document.getElementById('btnToggleMode'),
+    modePill: document.getElementById('modePill')
+  };
+
+
+    /* -------------------- 상태 -------------------- */
+  var MODE = 'direct'; // 'direct' | 'ai'
+  var MAX_PAGES = 5;
+  var DEFAULT_COUNT = 3;
+
+  var el = {
+    title: document.getElementById('titleInput'),
+    pageCount: document.getElementById('pageCountInput'),
+    pagesWrap: document.getElementById('pagesWrap'),
+    btnAdd: document.getElementById('btnAddPage'),
+    btnDel: document.getElementById('btnDelPage'),
+    keyword: document.getElementById('keywordInput'),
+    autoAdjust: document.getElementById('autoAdjustChk'),
+    btnAiPlot: document.getElementById('btnAiPlot'),
+    btnPrev: document.getElementById('btnPrev'),
+    btnHome: document.getElementById('btnHome'),
+    btnSave: document.getElementById('btnSave'),
+    btnToImages: document.getElementById('btnToImages'),
+    btnToggleMode: document.getElementById('btnToggleMode'),
+    modePill: document.getElementById('modePill')
+  };
+
+  /* ✅ URL 파라미터로 모드 강제 */
+  (function initModeFromQuery(){
+    var q = new URLSearchParams(location.search);
+    var m = (q.get('mode')||'').toLowerCase();
+    if (m === 'ai') MODE = 'ai'; else MODE = 'direct';
+    // UI 반영
+    if (MODE === 'ai'){
+      el.btnToggleMode.textContent = '직접쓰기';
+      el.modePill.textContent = 'AI와 함께 쓰기';
+    } else {
+      el.btnToggleMode.textContent = 'AI와 함께 쓰기';
+      el.modePill.textContent = '직접 쓰기';
+    }
+  })();
+
+
+  /* -------------------- 유틸 -------------------- */
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+  function stripLeadingNumber(s){
+    if (!s) return "";
+    return String(s).replace(/^\s*\d+[\.\)]\s*/, "");
+  }
+  function getPageCount(){ return clamp(parseInt(el.pageCount.value||DEFAULT_COUNT,10)||DEFAULT_COUNT, 1, MAX_PAGES); }
+  function getPages(){
+    var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
+    return areas.map(function(t){ return (t.value||'').trim(); });
+  }
+  function setPages(pages){
+    var count = clamp(pages.length, 1, MAX_PAGES);
+    el.pageCount.value = count;
+    renderPageAreas(count, pages);
+  }
+  function renderPageAreas(count, preset){
+    el.pagesWrap.innerHTML = '';
+    for (var i=0;i<count;i++){
+      var box = document.createElement('div');
+      box.className = 'page-box';
+      var idx = i+1;
+      var label = document.createElement('div');
+      label.className = 'page-title';
+      label.textContent = '페이지 ' + idx;
+
+      var ta = document.createElement('textarea');
+      ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
+      ta.value = (preset && preset[i]) ? stripLeadingNumber(preset[i]) : '';
+
+      box.appendChild(label);
+      box.appendChild(ta);
+      el.pagesWrap.appendChild(box);
+    }
+  }
+  function toast(msg){ try{ alert(msg); }catch(e){} }
+
+  /* -------------------- 초기 -------------------- */
+  (function init(){
+    // 모드 배지
+    if (MODE === 'ai') {
+      el.btnToggleMode.textContent = '직접쓰기';
+      el.modePill.textContent = 'AI와 함께 쓰기';
     }
 
-    // 상태
-    const state = {
-      mode: getQuery('mode') || 'ai',   // 'write' | 'ai'
-      maxPages: 5,
-      title: '',
-      pageCount: 3,
-      lines: [],
-    };
-
-    // DOM
-    const elTitle = document.getElementById('title');
-    const elPageCount = document.getElementById('pageCount');
-    const elPages = document.getElementById('pages');
-    const elAISection = document.getElementById('aiSection');
-    const elKeywords = document.getElementById('keywords');
-    const elAutoAdjust = document.getElementById('autoAdjust');
-
-    const btnAI = document.getElementById('btnAI');
-    const btnDraft = document.getElementById('btnDraft');
-    const btnBack = document.getElementById('btnBack');
-    const btnBackPage = document.getElementById('btnBackPage');
-    const btnToImages = document.getElementById('btnToImages');
-    const btnAdd = document.getElementById('btnAdd');
-    const btnRemove = document.getElementById('btnRemove');
-    const btnSwitchMode = document.getElementById('btnSwitchMode');
-
-    // 모드 반영 + 스위치 버튼 텍스트
-    function applyMode(){
-      if(state.mode === 'write'){
-        elAISection.classList.add('hidden');
-        btnSwitchMode.textContent = 'AI와 함께 쓰기';
-      }else{
-        elAISection.classList.remove('hidden');
-        btnSwitchMode.textContent = '직접 쓰기';
+    // 임시 저장 복구
+    try {
+      var saved = JSON.parse(localStorage.getItem('story_draft')||'{}');
+      if (saved && Array.isArray(saved.pages) && saved.pages.length){
+        el.title.value = saved.title || '';
+        var cnt = clamp(saved.pages.length, 1, MAX_PAGES);
+        el.pageCount.value = cnt;
+        renderPageAreas(cnt, saved.pages);
+        return;
       }
+    }catch(e){}
+    // 기본
+    el.pageCount.value = DEFAULT_COUNT;
+    renderPageAreas(DEFAULT_COUNT, []);
+  })();
+
+  /* -------------------- 이벤트 -------------------- */
+  el.pageCount.addEventListener('change', function(){
+    var cnt = getPageCount();
+    var current = getPages();
+    if (current.length < cnt){ while(current.length < cnt) current.push(''); }
+    else if (current.length > cnt){ current = current.slice(0, cnt); }
+    renderPageAreas(cnt, current);
+  });
+
+  el.btnAdd.addEventListener('click', function(){
+    var cnt = getPageCount();
+    if (cnt >= MAX_PAGES) return toast('최대 '+MAX_PAGES+' 페이지입니다.');
+    var pages = getPages(); pages.push(''); setPages(pages);
+  });
+
+  el.btnDel.addEventListener('click', function(){
+    var cnt = getPageCount();
+    if (cnt <= 1) return toast('최소 1페이지가 필요합니다.');
+    var pages = getPages(); pages.pop(); setPages(pages);
+  });
+
+  // 모드 토글
+  el.btnToggleMode.addEventListener('click', function(){
+    MODE = (MODE === 'direct') ? 'ai' : 'direct';
+    if (MODE === 'ai'){ el.btnToggleMode.textContent = '직접쓰기'; el.modePill.textContent = 'AI와 함께 쓰기'; }
+    else { el.btnToggleMode.textContent = 'AI와 함께 쓰기'; el.modePill.textContent = '직접 쓰기'; }
+  });
+
+  // 임시 저장
+  el.btnSave.addEventListener('click', function(){
+    var draft = { title: el.title.value || '', pages: getPages() };
+    localStorage.setItem('story_draft', JSON.stringify(draft));
+    toast('임시 저장 완료');
+  });
+
+  // 이전/대시보드
+  el.btnPrev.addEventListener('click', function(){ history.back(); });
+  el.btnHome.addEventListener('click', function(){ location.href = '/dashboard'; });
+
+  /* -------------------- AI 추천 (목업) -------------------- */
+  el.btnAiPlot.addEventListener('click', async function(){
+    var kws = (el.keyword.value || '').split(',').map(k => k.trim()).filter(Boolean);
+    if (!kws.length) return toast('키워드를 입력해 주세요.');
+    var count = getPageCount();
+    if (el.autoAdjust.checked){ count = clamp(kws.length, 1, MAX_PAGES); el.pageCount.value = count; }
+
+    var pages = [];
+    for (var i=0;i<count;i++){
+      var w = kws[i] || ('장면 ' + (i+1));
+      pages.push('‘'+ w +'’을 주제로 한 장면.');
     }
+    setPages(pages);
+  });
 
-    // URL 모드도 함께 바꿔주기(새로고침 없이 히스토리 교체)
-    function setMode(newMode){
-      state.mode = newMode;
-      applyMode();
-      autosave(); // 현재 내용 그대로 저장
-      const url = new URL(location.href);
-      url.searchParams.set('mode', newMode);
-      history.replaceState(null, '', url.toString());
-    }
+  /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */
+  function collectForImages(){
+    var pages = getPages();
+    var cnt = clamp(pages.length, 1, MAX_PAGES);
+    if (cnt !== getPageCount()) el.pageCount.value = cnt;
+    return { title: el.title.value || '', pages, count: cnt };
+  }
 
-    // 페이지 렌더
-    function renderPages(){
-      elPages.innerHTML = '';
-      const n = state.pageCount;
-      while(state.lines.length < n) state.lines.push('');
-      if(state.lines.length > n) state.lines = state.lines.slice(0, n);
+  async function goImages(){
+    var data = collectForImages();
 
-      for(let i=0;i<n;i++){
-        const box = document.createElement('div');
-        box.className = 'pagebox';
-        box.innerHTML = `
-          <h4>페이지 ${i+1}</h4>
-          <textarea data-idx="${i}" placeholder="이 페이지의 한 줄 문장(짧게)">${state.lines[i] || ''}</textarea>
-        `;
-        elPages.appendChild(box);
-      }
-      elPages.querySelectorAll('textarea').forEach(t=>{
-        t.addEventListener('input', (e)=>{
-          const idx = +e.target.dataset.idx;
-          state.lines[idx] = e.target.value;
-          autosave();
-        });
-      });
-    }
-
-    // 페이지 수 동기화
-    function syncPageCount(val){
-      let n = parseInt(val || 1, 10);
-      if(Number.isNaN(n)) n = 1;
-      n = Math.max(1, Math.min(state.maxPages, n));
-      state.pageCount = n;
-      elPageCount.value = n;
-      renderPages();
-      autosave();
-    }
-
-    // 임시 저장
-    const DRAFT_KEY = 'editor_draft_v1';
-    function autosave(){
-      const payload = {
-        mode: state.mode,
-        title: elTitle.value || '',
-        pageCount: state.pageCount,
-        lines: state.lines,
-        keywords: elKeywords ? (elKeywords.value || '') : '',
-      };
-      try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(payload)); }catch(e){}
-    }
-    function restoreDraft(){
-      try{
-        const raw = localStorage.getItem(DRAFT_KEY);
-        if(!raw) return;
-        const data = JSON.parse(raw);
-        elTitle.value = data.title || '';
-        state.pageCount = data.pageCount || 3;
-        elPageCount.value = state.pageCount;
-        state.lines = Array.isArray(data.lines) ? data.lines : [];
-        if(elKeywords) elKeywords.value = data.keywords || '';
-      }catch(e){}
-    }
-
-    // 알림
-    function toast(msg){ alert(msg); }
-
-    // AI 플롯 호출
-    async function callAI(){
-      const kws = (elKeywords.value || '')
-        .split(',').map(s=>s.trim()).filter(Boolean);
-
-      if(elAutoAdjust && elAutoAdjust.checked && kws.length){
-        syncPageCount(Math.min(kws.length, state.maxPages));
-      }
-
-      btnAI.disabled = true;
-      try{
-        const res = await fetch('/api/story',{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ keywords:kws, pages: state.pageCount, withImages:false })
-        });
-        if(!res.ok) throw new Error('AI 요청 실패');
-        const data = await res.json();
-        const clean = (data.pages||[]).map(line=>{
-          const m = line.match(/^\s*\d+\.\s*(.*)$/);
-          return m ? m[1] : line;
-        });
-        for(let i=0;i<state.pageCount;i++){
-          state.lines[i] = clean[i] || state.lines[i] || '';
-        }
-        renderPages();
-        autosave();
-      }catch(e){
-        toast('AI 추천 생성 실패');
-      }finally{
-        btnAI.disabled = false;
-      }
-    }
-
-    // 이미지 생성 페이지로 이동
-    function goImages(){
-      const payload = {
-        title: elTitle.value || '맞춤 동화(초안)',
-        pages: state.lines.slice(0, state.pageCount),
-        style: '동화 일러스트 (기본)',
-      };
-      try{ sessionStorage.setItem('editor_payload', JSON.stringify(payload)); }catch(e){}
-      location.href = '/images';
-    }
-
-    // 이벤트
-    elTitle.addEventListener('input', autosave);
-    elPageCount.addEventListener('input', (e)=> syncPageCount(e.target.value));
-    btnDraft.addEventListener('click', ()=>{ autosave(); toast('임시 저장 완료'); });
-    btnBack.addEventListener('click', ()=> location.href = '/dashboard');
-    btnBackPage.addEventListener('click', ()=> history.back());
-    btnToImages.addEventListener('click', goImages);
-    btnAdd.addEventListener('click', ()=>{ if(state.pageCount<state.maxPages) syncPageCount(state.pageCount+1); });
-    btnRemove.addEventListener('click', ()=>{ if(state.pageCount>1) syncPageCount(state.pageCount-1); });
-    btnAI && btnAI.addEventListener('click', callAI);
-    btnSwitchMode.addEventListener('click', ()=>{
-      const next = state.mode === 'write' ? 'ai' : 'write';
-      setMode(next);
+    // 1) 세션 저장
+    const res = await fetch('/editor/cache', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
     });
+    if (!res.ok) { toast('데이터 저장 실패'); return; }
 
-    // 초기화
-    (function init(){
-      restoreDraft();
-      applyMode();
-      syncPageCount(elPageCount.value || 3);
-    })();
-  </script>
+    // 2) 이동
+    location.href = '/images';
+  }
+
+  // “이미지 생성” 버튼에 후킹
+  el.btnToImages.addEventListener('click', function(e){ e.preventDefault(); goImages(); });
+
+})();
+</script>
 </body>
 </html>

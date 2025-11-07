@@ -1,128 +1,139 @@
-# storybook/routes/api.py
-from __future__ import annotations
-from typing import List
-from flask import Blueprint, request, jsonify
+# -*- coding: utf-8 -*-
+from flask import Blueprint, request, jsonify, session
+import requests
+import random  # (현재 직접 사용은 안 하지만 남겨둬도 무방)
+import time
+import hashlib
 
-from storybook.providers.gemini_provider import GeminiProvider
-from storybook.providers.image_provider import ImageProvider
-from storybook.repositories.story_repo_file import StoryFileRepository
+api_bp = Blueprint("api", __name__, url_prefix="/api")
 
-api_bp = Blueprint("api", __name__)
+# 1차 목업 소스(간헐적 5xx 가능)
+PICSUM_TMPL = "https://picsum.photos/seed/{seed}/800/1000"
+# 실패 시 대체
+PLACEHOLDER_TMPL = "https://placehold.co/800x1000?text=Image%20{idx}"
 
-# ---- 조사 보정 유틸 ---------------------------------------------------------
-def has_final_consonant(word: str) -> bool:
-    if not word:
+# 연결 재사용을 위한 세션
+_http = requests.Session()
+_http.headers.update({"User-Agent": "storybook-dev/0.1"})
+
+
+# ------------------------------
+# A) 편집기 데이터 -> 서버 세션 캐시
+# ------------------------------
+@api_bp.post("/editor/cache")
+def editor_cache():
+    """
+    요청 바디 예:
+      {
+        "style": "동화 일러스트 (기본)",
+        "pages": [
+          {"index": 1, "text": "장면1"},
+          {"index": 2, "text": "장면2"},
+          ...
+        ]
+      }
+    동작: style/pages를 서버 세션에 저장.
+    응답:
+      { "ok": true, "count": <페이지수> }
+    """
+    payload = request.get_json(silent=True) or {}
+    style = (payload.get("style") or "").strip()
+    pages = payload.get("pages") or []
+
+    # 간단 검증/정리
+    norm_pages = []
+    for p in pages:
+        try:
+            idx = int(p.get("index"))
+        except Exception:
+            continue
+        norm_pages.append({"index": idx, "text": (p.get("text") or "").strip()})
+    norm_pages.sort(key=lambda x: x["index"])
+
+    # 세션 저장
+    session["story_style"] = style
+    session["story_pages"] = norm_pages
+
+    return jsonify({"ok": True, "count": len(norm_pages)}), 200
+
+
+@api_bp.get("/editor/cached")
+def editor_cached():
+    """
+    디버그/확인용: 세션에 저장된 pages/style 확인
+    """
+    return jsonify({
+        "style": session.get("story_style"),
+        "pages": session.get("story_pages") or []
+    }), 200
+
+
+# ------------------------------
+# B) 목업 이미지 생성(네가 올린 구현 유지)
+# ------------------------------
+def _quick_ok(url: str, timeout_sec: float = 3.5) -> bool:
+    """외부 URL 가용성 빠른 점검. 실패/5xx/타임아웃 => False"""
+    try:
+        # 일부 서비스가 HEAD 막아 GET 사용 (stream=True로 바디 미수신)
+        with _http.get(url, timeout=timeout_sec, stream=True) as r:
+            return 200 <= r.status_code < 300
+    except Exception:
         return False
-    ch = word[-1]
-    code = ord(ch)
-    if 0xAC00 <= code <= 0xD7A3:
-        return ((code - 0xAC00) % 28) != 0
-    return False
 
-def josa_eul_reul(noun: str) -> str:
-    return "을" if has_final_consonant(noun) else "를"
 
-def prettify_lines_with_josa(lines: List[str]) -> List[str]:
-    out = []
-    for line in lines:
-        try:
-            num, rest = line.split(". ", 1)
-            kw = rest.split("'")[1]  # 따옴표 사이 단어 추출
-            particle = josa_eul_reul(kw)
-            out.append(f"{num}. '{kw}'{particle} 주제로 한 장면.")
-        except Exception:
-            out.append(line)
-    return out
-
-# ---- 스토리 텍스트 생성 ------------------------------------------------------
-@api_bp.post("/story")
-def generate_story():
+def _safe_url(primary_url: str, idx: int, tries: int = 2) -> str:
     """
-    입력:  { "keywords": ["씨앗","숲","친구"], "pages": 3, "withImages": true }
-    출력:  { "title": "맞춤 동화(초안)", "pages": ["1. ...","2. ..."], "images": [...] }
+    primary를 짧게 확인 후 실패하면 소폭 재시도, 그래도 실패면 placeholder 반환.
     """
-    data = request.get_json(force=True, silent=True) or {}
-    page_count = max(1, min(int(data.get("pages", 3) or 3), 5))
-    raw_keywords = data.get("keywords") or []
-    keywords = [k.strip() for k in raw_keywords if isinstance(k, str) and k.strip()]
-    with_images = bool(data.get("withImages", False))
+    for attempt in range(tries):
+        if _quick_ok(primary_url, timeout_sec=3.5):
+            return primary_url
+        # 아주 짧게 간격
+        time.sleep(0.15 * (attempt + 1))
+    return PLACEHOLDER_TMPL.format(idx=idx)
 
-    llm = GeminiProvider(api_key=None)
-    lines = llm.suggest_pages(keywords, page_count)
-    lines = prettify_lines_with_josa(lines)
 
-    resp = {"title": "맞춤 동화(초안)", "pages": lines}
-
-    if with_images:
-        imgp = ImageProvider()
-        resp["images"] = imgp.images_for_keywords(keywords, limit=page_count)
-
-    return jsonify(resp)
-
-# ---- 스토리 저장 -------------------------------------------------------------
-@api_bp.post("/story/save")
-def save_story():
+@api_bp.post("/images/generate")
+def images_generate():
     """
-    입력:  { "title": "...", "pages": [...], "images": [...] }
-    출력:  { "saved": true, "path": "/abs/path/to/file.json" }
+    요청:
+      { "style": "...", "pages": [{ "index": 1, "text": "..." }, ...] }
+    또는 (프론트가 빈 바디로 보내면) 세션에 캐시된 story_style/story_pages 를 자동 사용.
+    응답:
+      { "images": [{ "index": 1, "url": "..." }, ...] }
     """
-    payload = request.get_json(force=True, silent=True) or {}
-    repo = StoryFileRepository()
-    path = repo.save(payload)
-    return jsonify({"saved": True, "path": path})
+    payload = request.get_json(silent=True) or {}
 
-# ---- 이미지 생성(목업 URL) ---------------------------------------------------
-@api_bp.post("/images/generate")  # <-- 여기! url_prefix="/api" 기준으로 상대경로
-def generate_images():
-    """
-    입력(JSON): {
-      "pages": ["1. '사과'를 주제로 한 장면.", ...],  # 권장
-      # 또는 "texts": [ ... ]                         # 호환
-      "style": "storybook_basic",                     # 선택
-      "only_indices": [0,2]                           # 선택(부분 재생성)
-    }
-    출력(JSON): { "images": [url 또는 null ...] }  # 원래 길이에 맞춘 배열
-    """
-    data = request.get_json(force=True, silent=True) or {}
-
-    pages: List[str] = data.get("pages") or data.get("texts") or []
-    if not isinstance(pages, list) or len(pages) == 0:
-        return jsonify({"error": "pages(list) is required"}), 400
-
-    only_indices = data.get("only_indices")
-    if isinstance(only_indices, list):
-        targets = [i for i in only_indices if isinstance(i, int) and 0 <= i < len(pages)]
-        if not targets:
-            targets = list(range(len(pages)))
+    # 세션 캐시를 백업 소스로 활용 (빈 요청일 때 대비)
+    pages = payload.get("pages")
+    style = payload.get("style")
+    if not pages:
+        pages = session.get("story_pages") or []
+    if not style:
+        style = (session.get("story_style") or "").strip()
     else:
-        targets = list(range(len(pages)))
+        style = (style or "").strip()
 
-    style = (data.get("style") or "").strip().lower()
-
-    def extract_keyword(line: str) -> str:
+    out = []
+    for p in pages:
         try:
-            s = line.split("'")
-            if len(s) >= 3 and s[1].strip():
-                return s[1].strip()
+            idx = int(p.get("index"))
         except Exception:
-            pass
-        return (line or "").strip() or "장면"
+            continue
 
-    def style_prefix(s: str) -> str:
-        if "연필" in s or "pencil" in s:
-            return "cute pencil sketch, "
-        if "수채" in s or "watercolor" in s:
-            return "soft watercolor illustration, "
-        return "cute storybook illustration, "
+        text = (p.get("text") or "").strip()
+        # 같은 입력이면 항상 동일 seed => 깜박이며 다른 그림으로 바뀌는 현상 완화
+        seed_src = f"{style}|{text}|{idx}"
+        seed = hashlib.sha1(seed_src.encode("utf-8")).hexdigest()[:12]
+        primary = PICSUM_TMPL.format(seed=seed)
 
-    keywords = [extract_keyword(pages[i]) for i in targets]
-    prompts = [f"{style_prefix(style)}{kw}, simple background, soft colors" for kw in keywords]
+        # 가용성 점검 + 재시도 + placeholder 대체
+        url = _safe_url(primary, idx, tries=2)
+        out.append({"index": idx, "url": url})
 
-    imgp = ImageProvider()
-    urls = [imgp.build_image_url(p) for p in prompts]
+        # 너무 급격한 동시 타격 방지(소폭)
+        time.sleep(0.02)
 
-    full = [None] * len(pages)
-    for local_i, page_i in enumerate(targets):
-        full[page_i] = urls[local_i]
-
-    return jsonify({"images": full})
+    # index 오름차순 정렬(보기 좋게)
+    out.sort(key=lambda x: x["index"])
+    return jsonify({"images": out}), 200

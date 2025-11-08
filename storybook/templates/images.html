@@ -84,9 +84,9 @@
         <div class="field">
           <div class="label">스타일</div>
           <select id="style">
-            <option {{ 'selected' if style == '동화 일러스트 (기본)' else '' }}>동화 일러스트 (기본)</option>
-            <option {{ 'selected' if style == '연필 스케치' else '' }}>연필 스케치</option>
-            <option {{ 'selected' if style == '수채화 파스텔' else '' }}>수채화 파스텔</option>
+            <option> {{ 'selected' if style == '동화 일러스트 (기본)' else '' }}>동화 일러스트 (기본)</option>
+            <option> {{ 'selected' if style == '연필 스케치' else '' }}>연필 스케치</option>
+            <option> {{ 'selected' if style == '수채화 파스텔' else '' }}>수채화 파스텔</option>
           </select>
         </div>
 
@@ -106,7 +106,7 @@
       <!-- 카드 그리드 -->
       <div class="grid" id="grid">
         {% for p in pages %}
-        <div class="card" data-index="{{ p.index }}" data-text="{{ (p.text or '').replace('"','&quot;') }}">
+        <div class="card" data-index="{{ p.index }}" data-text="{{ (p.text or '')|e }}">
           <div class="figure">
             <img alt="이미지 {{ p.index }}" />
             <div class="overlay">

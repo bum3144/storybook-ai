@@ -84,9 +84,9 @@
         <div class="field">
           <div class="label">스타일</div>
           <select id="style">
-            <option> {{ 'selected' if style == '동화 일러스트 (기본)' else '' }}>동화 일러스트 (기본)</option>
-            <option> {{ 'selected' if style == '연필 스케치' else '' }}>연필 스케치</option>
-            <option> {{ 'selected' if style == '수채화 파스텔' else '' }}>수채화 파스텔</option>
+            <option {{ 'selected' if style == '동화 일러스트 (기본)' else '' }}>동화 일러스트 (기본)</option>
+            <option {{ 'selected' if style == '연필 스케치' else '' }}>연필 스케치</option>
+            <option {{ 'selected' if style == '수채화 파스텔' else '' }}>수채화 파스텔</option>
           </select>
         </div>
 
@@ -179,7 +179,7 @@ function updateImage(card, url){
     fig.classList.add('ready');
     setLoading(card, false);
     setStatus(card, '');
-    maybeEnablePreview(); // ✅ 추가
+    maybeEnablePreview(); // 추가
     return;
   }
   img.onload = () => {
@@ -187,7 +187,7 @@ function updateImage(card, url){
     fig.classList.add('ready');
     setLoading(card, false);
     setStatus(card, '');
-    maybeEnablePreview(); // ✅ 추가
+    maybeEnablePreview(); // 추가
   };
   img.onerror = () => {
     setLoading(card, false);
@@ -240,7 +240,7 @@ async function generateAll(){
     cards.forEach(card=>{
       updateImage(card,byIdx.get(Number(card.dataset.index)));
     });
-    maybeEnablePreview(); // ✅ 전체 완료 후
+    maybeEnablePreview(); // 전체 완료 후
   }catch(e){
     cards.forEach(c=>{setLoading(c,false);setStatus(c,'요청 실패','danger');});
   }
@@ -257,7 +257,7 @@ async function generateSelected(){
       updateImage(card,byIdx.get(Number(card.dataset.index)));
       card.querySelector('.ck').checked=false;
     });
-    maybeEnablePreview(); // ✅ 추가
+    maybeEnablePreview(); // 추가
   }catch(e){
     selected.forEach(c=>{setLoading(c,false);setStatus(c,'요청 실패','danger');});
   }
@@ -269,7 +269,7 @@ async function generateOne(card){
     const images=await callGenerate(payloadFrom([card]));
     const url=(images[0]&&images[0].url)?images[0].url:'';
     updateImage(card,url);
-    maybeEnablePreview(); // ✅ 추가
+    maybeEnablePreview(); // 추가
   }catch(e){
     setLoading(card,false);
     setStatus(card,'요청 실패','danger');

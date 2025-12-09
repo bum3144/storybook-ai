@@ -1,311 +1,442 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>글 편집</title>
   <style>
-    :root { --gap:24px; --brand:#2563eb; --muted:#6b7280; }
-    body { font-family: -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",system-ui,sans-serif; background:#fff; color:#111827; }
-    .wrap { max-width:1200px; margin:0 auto; padding:24px; }
-    h1 { font-size:24px; margin:0 0 18px; display:flex; align-items:center; gap:10px; }
-    .grid { display:grid; grid-template-columns:340px 1fr; gap:28px; }
-
-    .panel { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:18px; }
-    .panel h2 { font-size:16px; margin:0 0 12px; }
-    .muted { color:var(--muted); font-size:13px; }
-
-    label { display:block; font-size:13px; color:#374151; margin:10px 0 6px; }
-    input[type="text"], input[type="number"], textarea, select {
-      width:100%; box-sizing:border-box; border:1px solid #d1d5db; border-radius:10px;
-      padding:10px 12px; font-size:14px; background:#fff;
+    :root {
+      --gap: 24px;
+      --brand: #2563eb;
+      --muted: #6b7280;
     }
-    textarea { height:120px; resize:vertical; }
 
-    .btnbar { display:flex; gap:10px; flex-wrap:wrap; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif;
+      background: #fff;
+      color: #111827;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin: 0 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 28px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      font-size: 16px;
+      margin: 0 0 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #374151;
+      margin: 10px 0 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    .btnbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .btn {
-      border:1px solid #d1d5db; background:#f8f9fb; padding:10px 14px; border-radius:10px;
-      cursor:pointer; font-size:14px;
+      border: 1px solid #d1d5db;
+      background: #f8f9fb;
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
     }
-    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
-    .btn.ghost { background:#fff; }
-    .btn.success { background:#10b981; color:#fff; border-color:#10b981; }
-    .btn.warn { background:#f59e0b; color:#fff; border-color:#f59e0b; }
 
-    .pages { display:flex; flex-direction:column; gap:16px; }
-    .page-box { border:1px dashed #e5e7eb; border-radius:12px; padding:14px; }
-    .page-title { font-weight:600; margin-bottom:8px; }
+    .btn:disabled {
+      opacity: .5;
+      cursor: default;
+      box-shadow: none;
+    }
 
-    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .spacer { height:10px; }
+    .btn:not(:disabled):active {
+      transform: translateY(1px);
+    }
 
-    .mode-pill { display:inline-flex; gap:8px; align-items:center; font-size:13px; padding:3px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; }
-    .hidden { display:none !important; }
+    .btn.primary {
+      background: var(--brand);
+      color: #fff;
+      border-color: var(--brand);
+    }
+
+    .btn.ghost {
+      background: #fff;
+    }
+
+    .btn.success {
+      background: #10b981;
+      color: #fff;
+      border-color: #10b981;
+    }
+
+    .btn.warn {
+      background: #f59e0b;
+      color: #fff;
+      border-color: #f59e0b;
+    }
+
+    .pages {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .page-box {
+      border: 1px dashed #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .page-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .spacer {
+      height: 10px;
+    }
+
+    .mode-pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
+
 <body>
-<div class="wrap">
-  <h1>📝 글 편집 <span id="modePill" class="mode-pill">직접 쓰기</span></h1>
+  <div class="wrap">
+    <h1>📝 글 편집 <span id="modePill" class="mode-pill">직접 쓰기</span></h1>
 
-  <div class="grid">
-    <!-- 좌측: 기본 정보 + AI 추천 받기 -->
-    <div class="panel">
-      <h2>기본 정보</h2>
+    <div class="grid">
+      <!-- 좌측: 기본 정보 + AI 추천 받기 -->
+      <div class="panel">
+        <h2>기본 정보</h2>
 
-      <label>제목</label>
-      <input id="titleInput" type="text" placeholder="예: 지환이의 모험 일기"/>
+        <label>제목</label>
+        <input id="titleInput" type="text" placeholder="예: 지환이의 모험 일기" />
 
-      <div class="row">
-        <div style="flex:1">
-          <label>페이지 수 (1~5)</label>
-          <input id="pageCountInput" type="number" min="1" max="5" value="3"/>
-          <div class="muted">페이지 수를 바꾸면 편집 영역이 자동으로 맞춰집니다.</div>
+        <div class="row">
+          <div style="flex:1">
+            <label>페이지 수 (1~5)</label>
+            <input id="pageCountInput" type="number" min="1" max="5" value="3" />
+            <div class="muted">페이지 수를 바꾸면 편집 영역이 자동으로 맞춰집니다.</div>
+          </div>
+        </div>
+
+        <div class="spacer"></div>
+        <hr style="border:none;border-top:1px solid #eee;" />
+        <div class="spacer"></div>
+
+        <section id="aiSection">
+          <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
+
+          <label>키워드 (쉼표로 구분)</label>
+          <input id="keywordInput" type="text" placeholder="예: 씨앗, 숲, 친구" />
+
+          <div class="row" style="margin-top:8px">
+            <label style="display:flex; align-items:center; gap:8px; margin:0">
+              <input id="autoAdjustChk" type="checkbox" checked />
+              키워드 개수에 맞춰 페이지 수 자동 조정
+            </label>
+            <span class="muted">(최대 5페이지)</span>
+          </div>
+
+          <div class="spacer"></div>
+          <button id="btnAiPlot" class="btn primary" style="width:100%">AI로 추천 플롯 생성</button>
+
+          <div class="spacer"></div>
+          <div class="muted">※ 현재는 간단한 목업 모델을 사용합니다. (실제 Gemini/Imagen은 다음 단계 연동)</div>
+
+          <div class="spacer"></div>
+          <hr style="border:none;border-top:1px solid #eee;" />
+          <div class="spacer"></div>
+        </section>
+
+        <div class="btnbar">
+          <!-- 1줄: 이전/대시보드/임시 저장 -->
+          <button id="btnPrev" class="btn ghost">이전페이지</button>
+          <button id="btnHome" class="btn ghost">대시보드</button>
+          <button id="btnSave" class="btn warn">임시 저장</button>
+        </div>
+
+        <div class="spacer"></div>
+        <div class="btnbar">
+          <!-- 2줄: 모드 토글 + 이미지 생성 -->
+          <button id="btnToggleMode" class="btn">AI와 함께 쓰기</button>
+          <button id="btnToImages" class="btn success" data-action="to-images">이미지 생성</button>
         </div>
       </div>
 
-      <div class="spacer"></div>
-      <hr style="border:none;border-top:1px solid #eee;"/>
-      <div class="spacer"></div>
+      <!-- 우측: 페이지별 문장 -->
+      <div class="panel">
+        <h2>페이지별 문장</h2>
+        <div id="pagesWrap" class="pages"></div>
 
-<section id="aiSection">
-      <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
-
-      <label>키워드 (쉼표로 구분)</label>
-      <input id="keywordInput" type="text" placeholder="예: 씨앗, 숲, 친구"/>
-
-      <div class="row" style="margin-top:8px">
-        <label style="display:flex; align-items:center; gap:8px; margin:0">
-          <input id="autoAdjustChk" type="checkbox" checked/>
-          키워드 개수에 맞춰 페이지 수 자동 조정
-        </label>
-        <span class="muted">(최대 5페이지)</span>
-      </div>
-
-      <div class="spacer"></div>
-      <button id="btnAiPlot" class="btn primary" style="width:100%">AI로 추천 플롯 생성</button>
-
-      <div class="spacer"></div>
-      <div class="muted">※ 현재는 간단한 목업 모델을 사용합니다. (실제 Gemini/Imagen은 다음 단계 연동)</div>
-
-      <div class="spacer"></div>
-      <hr style="border:none;border-top:1px solid #eee;"/>
-      <div class="spacer"></div>
-</section>
-
-      <div class="btnbar">
-        <!-- 1줄: 이전/대시보드/임시 저장 -->
-        <button id="btnPrev"    class="btn ghost">이전페이지</button>
-        <button id="btnHome"    class="btn ghost">대시보드</button>
-        <button id="btnSave"    class="btn warn">임시 저장</button>
-      </div>
-
-      <div class="spacer"></div>
-      <div class="btnbar">
-        <!-- 2줄: 모드 토글 + 이미지 생성 -->
-        <button id="btnToggleMode" class="btn">AI와 함께 쓰기</button>
-        <button id="btnToImages"   class="btn success" data-action="to-images">이미지 생성</button>
-      </div>
-    </div>
-
-    <!-- 우측: 페이지별 문장 -->
-    <div class="panel">
-      <h2>페이지별 문장</h2>
-      <div id="pagesWrap" class="pages"></div>
-
-      <div class="spacer"></div>
-      <div class="btnbar">
-        <button id="btnAddPage" class="btn">+ 페이지 추가</button>
-        <button id="btnDelPage" class="btn">- 페이지 제거</button>
+        <div class="spacer"></div>
+        <div class="btnbar">
+          <button id="btnAddPage" class="btn">+ 페이지 추가</button>
+          <button id="btnDelPage" class="btn">- 페이지 제거</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-(function(){
-  /* -------------------- 상태 -------------------- */
-  // URL 파라미터로 모드 결정: ?mode=ai → 'ai', 그 외는 'direct'
-  var MODE = (new URL(location.href).searchParams.get('mode') || 'write').toLowerCase() === 'ai' ? 'ai' : 'direct';
-  var MAX_PAGES = 5;
-  var DEFAULT_COUNT = 3;
+  <script>
+    (function () {
+      /* -------------------- 상태 -------------------- */
+      // URL 파라미터로 모드 결정: ?mode=ai → 'ai', 그 외는 'direct'
+      var MODE = (new URL(location.href).searchParams.get('mode') || 'write').toLowerCase() === 'ai' ? 'ai' : 'direct';
+      var MAX_PAGES = 5;
+      var DEFAULT_COUNT = 3;
 
-  var el = {
-    title: document.getElementById('titleInput'),
-    pageCount: document.getElementById('pageCountInput'),
-    pagesWrap: document.getElementById('pagesWrap'),
-    btnAdd: document.getElementById('btnAddPage'),
-    btnDel: document.getElementById('btnDelPage'),
-    keyword: document.getElementById('keywordInput'),
-    autoAdjust: document.getElementById('autoAdjustChk'),
-    btnAiPlot: document.getElementById('btnAiPlot'),
-    btnPrev: document.getElementById('btnPrev'),
-    btnHome: document.getElementById('btnHome'),
-    btnSave: document.getElementById('btnSave'),
-    btnToImages: document.getElementById('btnToImages'),
-    btnToggleMode: document.getElementById('btnToggleMode'),
-    modePill: document.getElementById('modePill')
-  };
+      var el = {
+        title: document.getElementById('titleInput'),
+        pageCount: document.getElementById('pageCountInput'),
+        pagesWrap: document.getElementById('pagesWrap'),
+        btnAdd: document.getElementById('btnAddPage'),
+        btnDel: document.getElementById('btnDelPage'),
+        keyword: document.getElementById('keywordInput'),
+        autoAdjust: document.getElementById('autoAdjustChk'),
+        btnAiPlot: document.getElementById('btnAiPlot'),
+        btnPrev: document.getElementById('btnPrev'),
+        btnHome: document.getElementById('btnHome'),
+        btnSave: document.getElementById('btnSave'),
+        btnToImages: document.getElementById('btnToImages'),
+        btnToggleMode: document.getElementById('btnToggleMode'),
+        modePill: document.getElementById('modePill')
+      };
 
-  /* -------------------- 유틸 -------------------- */
-  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-  function stripLeadingNumber(s){
-    if (!s) return "";
-    return String(s).replace(/^\s*\d+[\.\)]\s*/, "");
-  }
-  function getPageCount(){ return clamp(parseInt(el.pageCount.value||DEFAULT_COUNT,10)||DEFAULT_COUNT, 1, MAX_PAGES); }
-  function getPages(){
-    var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
-    return areas.map(function(t){ return (t.value||'').trim(); });
-  }
-  function setPages(pages){
-    var count = clamp(pages.length, 1, MAX_PAGES);
-    el.pageCount.value = count;
-    renderPageAreas(count, pages);
-  }
-  function renderPageAreas(count, preset){
-    el.pagesWrap.innerHTML = '';
-    for (var i=0;i<count;i++){
-      var box = document.createElement('div');
-      box.className = 'page-box';
-      var idx = i+1;
-      var label = document.createElement('div');
-      label.className = 'page-title';
-      label.textContent = '페이지 ' + idx;
+      /* -------------------- 유틸 -------------------- */
+      function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+      function stripLeadingNumber(s) {
+        if (!s) return "";
+        return String(s).replace(/^\s*\d+[\.\)]\s*/, "");
+      }
+      function getPageCount() { return clamp(parseInt(el.pageCount.value || DEFAULT_COUNT, 10) || DEFAULT_COUNT, 1, MAX_PAGES); }
+      function getPages() {
+        var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
+        return areas.map(function (t) { return (t.value || '').trim(); });
+      }
+      function setPages(pages) {
+        var count = clamp(pages.length, 1, MAX_PAGES);
+        el.pageCount.value = count;
+        renderPageAreas(count, pages);
+      }
+      function renderPageAreas(count, preset) {
+        el.pagesWrap.innerHTML = '';
+        for (var i = 0; i < count; i++) {
+          var box = document.createElement('div');
+          box.className = 'page-box';
+          var idx = i + 1;
+          var label = document.createElement('div');
+          label.className = 'page-title';
+          label.textContent = '페이지 ' + idx;
 
-      var ta = document.createElement('textarea');
-      ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
-      ta.value = (preset && preset[i]) ? stripLeadingNumber(preset[i]) : '';
+          var ta = document.createElement('textarea');
+          ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
+          ta.value = (preset && preset[i]) ? stripLeadingNumber(preset[i]) : '';
 
-      box.appendChild(label);
-      box.appendChild(ta);
-      el.pagesWrap.appendChild(box);
-    }
-  }
-  function toast(msg){ try{ alert(msg); }catch(e){} }
-
-  /* -------------------- 모드 UI 반영 -------------------- */
-  function applyModeUI(){
-  var aiSection = document.getElementById('aiSection');
-
-      if (MODE === 'ai'){
-        // 라벨
-        el.btnToggleMode.textContent = '직접쓰기';
-        el.modePill.textContent = 'AI와 함께 쓰기';
-        // AI 섹션 표시
-        if (aiSection) {
-          aiSection.classList.remove('hidden');
-          aiSection.setAttribute('aria-hidden','false');
-        }
-      } else {
-        // 라벨
-        el.btnToggleMode.textContent = 'AI와 함께 쓰기';
-        el.modePill.textContent = '직접 쓰기';
-        // AI 섹션 숨김
-        if (aiSection) {
-          aiSection.classList.add('hidden');
-          aiSection.setAttribute('aria-hidden','true');
+          box.appendChild(label);
+          box.appendChild(ta);
+          el.pagesWrap.appendChild(box);
         }
       }
-  }
+      function toast(msg) { try { alert(msg); } catch (e) { } }
 
-  /* -------------------- 초기 -------------------- */
-  (function init(){
-    applyModeUI();
+      /* -------------------- 모드 UI 반영 -------------------- */
+      function applyModeUI() {
+        var aiSection = document.getElementById('aiSection');
 
-    // 임시 저장 복구
-    try {
-      var saved = JSON.parse(localStorage.getItem('story_draft')||'{}');
-      if (saved && Array.isArray(saved.pages) && saved.pages.length){
-        el.title.value = saved.title || '';
-        var cnt = clamp(saved.pages.length, 1, MAX_PAGES);
-        el.pageCount.value = cnt;
-        renderPageAreas(cnt, saved.pages);
-        return;
+        if (MODE === 'ai') {
+          // 라벨
+          el.btnToggleMode.textContent = '직접쓰기';
+          el.modePill.textContent = 'AI와 함께 쓰기';
+          // AI 섹션 표시
+          if (aiSection) {
+            aiSection.classList.remove('hidden');
+            aiSection.setAttribute('aria-hidden', 'false');
+          }
+        } else {
+          // 라벨
+          el.btnToggleMode.textContent = 'AI와 함께 쓰기';
+          el.modePill.textContent = '직접 쓰기';
+          // AI 섹션 숨김
+          if (aiSection) {
+            aiSection.classList.add('hidden');
+            aiSection.setAttribute('aria-hidden', 'true');
+          }
+        }
       }
-    }catch(e){}
-    // 기본
-    el.pageCount.value = DEFAULT_COUNT;
-    renderPageAreas(DEFAULT_COUNT, []);
-  })();
 
-  /* -------------------- 이벤트 -------------------- */
-  el.pageCount.addEventListener('change', function(){
-    var cnt = getPageCount();
-    var current = getPages();
-    if (current.length < cnt){ while(current.length < cnt) current.push(''); }
-    else if (current.length > cnt){ current = current.slice(0, cnt); }
-    renderPageAreas(cnt, current);
-  });
+      /* -------------------- 초기 -------------------- */
+      (function init() {
+        applyModeUI();
 
-  el.btnAdd.addEventListener('click', function(){
-    var cnt = getPageCount();
-    if (cnt >= MAX_PAGES) return toast('최대 '+MAX_PAGES+' 페이지입니다.');
-    var pages = getPages(); pages.push(''); setPages(pages);
-  });
+        // 임시 저장 복구
+        try {
+          var saved = JSON.parse(localStorage.getItem('story_draft') || '{}');
+          if (saved && Array.isArray(saved.pages) && saved.pages.length) {
+            el.title.value = saved.title || '';
+            var cnt = clamp(saved.pages.length, 1, MAX_PAGES);
+            el.pageCount.value = cnt;
+            renderPageAreas(cnt, saved.pages);
+            return;
+          }
+        } catch (e) { }
+        // 기본
+        el.pageCount.value = DEFAULT_COUNT;
+        renderPageAreas(DEFAULT_COUNT, []);
+      })();
 
-  el.btnDel.addEventListener('click', function(){
-    var cnt = getPageCount();
-    if (cnt <= 1) return toast('최소 1페이지가 필요합니다.');
-    var pages = getPages(); pages.pop(); setPages(pages);
-  });
+      /* -------------------- 이벤트 -------------------- */
+      el.pageCount.addEventListener('change', function () {
+        var cnt = getPageCount();
+        var current = getPages();
+        if (current.length < cnt) { while (current.length < cnt) current.push(''); }
+        else if (current.length > cnt) { current = current.slice(0, cnt); }
+        renderPageAreas(cnt, current);
+      });
 
-  // 모드 토글
-  el.btnToggleMode.addEventListener('click', function(){
-    MODE = (MODE === 'direct') ? 'ai' : 'direct';
-    applyModeUI();
-  });
+      el.btnAdd.addEventListener('click', function () {
+        var cnt = getPageCount();
+        if (cnt >= MAX_PAGES) return toast('최대 ' + MAX_PAGES + ' 페이지입니다.');
+        var pages = getPages(); pages.push(''); setPages(pages);
+      });
 
-  // 임시 저장
-  el.btnSave.addEventListener('click', function(){
-    var draft = { title: el.title.value || '', pages: getPages() };
-    localStorage.setItem('story_draft', JSON.stringify(draft));
-    toast('임시 저장 완료');
-  });
+      el.btnDel.addEventListener('click', function () {
+        var cnt = getPageCount();
+        if (cnt <= 1) return toast('최소 1페이지가 필요합니다.');
+        var pages = getPages(); pages.pop(); setPages(pages);
+      });
 
-  // 이전/대시보드
-  el.btnPrev.addEventListener('click', function(){ history.back(); });
-  el.btnHome.addEventListener('click', function(){ location.href = '/dashboard'; });
+      // 모드 토글
+      el.btnToggleMode.addEventListener('click', function () {
+        MODE = (MODE === 'direct') ? 'ai' : 'direct';
+        applyModeUI();
+      });
 
-  /* -------------------- AI 추천 (목업) -------------------- */
-  el.btnAiPlot.addEventListener('click', async function(){
-    var kws = (el.keyword.value || '').split(',').map(k => k.trim()).filter(Boolean);
-    if (!kws.length) return toast('키워드를 입력해 주세요.');
-    var count = getPageCount();
-    if (el.autoAdjust.checked){ count = clamp(kws.length, 1, MAX_PAGES); el.pageCount.value = count; }
+      // 임시 저장
+      el.btnSave.addEventListener('click', function () {
+        var draft = { title: el.title.value || '', pages: getPages() };
+        localStorage.setItem('story_draft', JSON.stringify(draft));
+        toast('임시 저장 완료');
+      });
 
-    var pages = [];
-    for (var i=0;i<count;i++){
-      var w = kws[i] || ('장면 ' + (i+1));
-      pages.push('‘'+ w +'’을 주제로 한 장면.');
-    }
-    setPages(pages);
-  });
+      // 이전/대시보드
+      el.btnPrev.addEventListener('click', function () { history.back(); });
+      el.btnHome.addEventListener('click', function () { location.href = '/dashboard'; });
 
-  /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */
-  function collectForImages(){
-    var pages = getPages();
-    var cnt = clamp(pages.length, 1, MAX_PAGES);
-    if (cnt !== getPageCount()) el.pageCount.value = cnt;
-    return { title: el.title.value || '', pages, count: cnt };
-  }
+      /* -------------------- AI 추천 (목업) -------------------- */
+      el.btnAiPlot.addEventListener('click', async function () {
+        var kws = (el.keyword.value || '').split(',').map(k => k.trim()).filter(Boolean);
+        if (!kws.length) return toast('키워드를 입력해 주세요.');
+        var count = getPageCount();
+        if (el.autoAdjust.checked) { count = clamp(kws.length, 1, MAX_PAGES); el.pageCount.value = count; }
 
-  async function goImages(){
-    var data = collectForImages();
+        var pages = [];
+        for (var i = 0; i < count; i++) {
+          var w = kws[i] || ('장면 ' + (i + 1));
+          pages.push('‘' + w + '’을 주제로 한 장면.');
+        }
+        setPages(pages);
+      });
 
-    // 1) 세션 저장
-    const res = await fetch('/editor/cache', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) { toast('데이터 저장 실패'); return; }
+      /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */
+      function collectForImages() {
+        var pages = getPages();
+        var cnt = clamp(pages.length, 1, MAX_PAGES);
+        if (cnt !== getPageCount()) el.pageCount.value = cnt;
+        return { title: el.title.value || '', pages, count: cnt };
+      }
 
-    // 2) 이동
-    location.href = '/images';
-  }
+      async function goImages() {
+        var data = collectForImages();
 
-  el.btnToImages.addEventListener('click', function(e){ e.preventDefault(); goImages(); });
-})();
-</script>
+        // 1) 세션 저장
+        const res = await fetch('/editor/cache', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) { toast('데이터 저장 실패'); return; }
+
+        // 2) 이동
+        location.href = '/images';
+      }
+
+      el.btnToImages.addEventListener('click', function (e) { e.preventDefault(); goImages(); });
+    })();
+  </script>
 </body>
+
 </html>

@@ -1,39 +1,180 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <title>대시보드 · AI 그림동화</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root{
-      --bg:#f7f9fb; --card:#fff; --text:#111; --muted:#6b7280; --line:#e5e7eb;
-      --primary:#2563eb; --primary-ink:#fff; --chip:#10b981;
+    :root {
+      --bg: #f7f9fb;
+      --card: #fff;
+      --text: #111;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #2563eb;
+      --primary-ink: #fff;
+      --chip: #10b981;
     }
-    *{box-sizing:border-box}
-    body{margin:0; font-family:ui-sans-serif,system-ui,AppleSDGothicNeo,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--text); background:var(--bg)}
-    .wrap{max-width:1080px; margin:40px auto; padding:0 20px}
-    header{display:flex; align-items:flex-end; gap:10px; margin-bottom:24px}
-    header h1{font-size:32px; margin:0}
-    header .crumb{font-size:14px; color:var(--muted)}
-    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:16px}
-    @media (max-width:900px){ .grid{grid-template-columns:repeat(6,1fr)} }
-    @media (max-width:640px){ .grid{grid-template-columns:repeat(4,1fr)} }
-    .card{grid-column:span 6; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px}
-    .title{display:flex; align-items:center; gap:8px; margin-bottom:8px}
-    .badge{font-size:12px; color:#0f172a; background:#e2e8f0; padding:2px 8px; border-radius:999px}
-    .badge.green{background:#d1fae5; color:#065f46}
-    .desc{color:var(--muted); line-height:1.7; margin-bottom:16px}
-    .btn{appearance:none; border:0; cursor:pointer; padding:12px 18px; border-radius:10px; font-weight:600}
-    .btn.primary{background:var(--primary); color:var(--primary-ink)}
-    .btn.gray{background:#f3f4f6; color:#111; border:1px solid var(--line)}
-    .list{margin-top:24px}
-    .list h3{margin:0 0 8px 0; font-size:16px}
-    .list .row{display:flex; gap:10px; flex-wrap:wrap}
-    .chip{font-size:12px; color:#065f46; background:#d1fae5; padding:4px 10px; border-radius:999px; border:1px solid #a7f3d0}
-    .new{display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none}
-    .new svg{width:18px; height:18px}
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, AppleSDGothicNeo, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg)
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 40px auto;
+      padding: 0 20px
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 24px
+    }
+
+    header h1 {
+      font-size: 32px;
+      margin: 0
+    }
+
+    header .crumb {
+      font-size: 14px;
+      color: var(--muted)
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px
+    }
+
+    @media (max-width:900px) {
+      .grid {
+        grid-template-columns: repeat(6, 1fr)
+      }
+    }
+
+    @media (max-width:640px) {
+      .grid {
+        grid-template-columns: repeat(4, 1fr)
+      }
+    }
+
+    .card {
+      grid-column: span 6;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px
+    }
+
+    .badge {
+      font-size: 12px;
+      color: #0f172a;
+      background: #e2e8f0;
+      padding: 2px 8px;
+      border-radius: 999px
+    }
+
+    .badge.green {
+      background: #d1fae5;
+      color: #065f46
+    }
+
+    .desc {
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 16px
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
+    }
+
+    /* 비활성 버튼 */
+    .btn:disabled {
+      opacity: .5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    /* 눌렀을 때 살짝 내려가는 느낌 */
+    .btn:not(:disabled):active {
+      transform: translateY(1px);
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: var(--primary-ink)
+    }
+
+    .btn.gray {
+      background: #f3f4f6;
+      color: #111;
+      border: 1px solid var(--line)
+    }
+
+    .list {
+      margin-top: 24px
+    }
+
+    .list h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px
+    }
+
+    .list .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .chip {
+      font-size: 12px;
+      color: #065f46;
+      background: #d1fae5;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #a7f3d0
+    }
+
+    .new {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none
+    }
+
+    .new svg {
+      width: 18px;
+      height: 18px
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <header>
@@ -49,7 +190,9 @@
         <h2 style="margin:0 0 6px 0;">+ 새 스토리 만들기</h2>
         <p class="desc">제목과 즐겨찾는 스타일을 정하고, 직접 쓰기 또는 AI와 함께 쓰기를 선택하세요.</p>
         <a class="btn primary new" href="/new" aria-label="새 스토리 만들기">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
           새 스토리 만들기
         </a>
         <div class="list">
@@ -78,4 +221,5 @@
     </div>
   </div>
 </body>
+
 </html>

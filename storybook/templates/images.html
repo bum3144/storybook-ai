@@ -1,79 +1,275 @@
 <!-- /storybook/templates/images.html -->
 <!doctype html>
 <html lang="ko">
+
 <head>
   <meta charset="utf-8" />
   <title>🌱 이미지 생성</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg:#fafbfc; --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#2563eb; --primary-pressed:#1d4ed8; --border:#e5e7eb;
-      --danger:#ef4444; --ok:#10b981;
+      --bg: #fafbfc;
+      --card: #fff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-pressed: #1d4ed8;
+      --border: #e5e7eb;
+      --danger: #ef4444;
+      --ok: #10b981;
     }
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;padding:0;background:var(--bg);color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,Apple SD Gothic Neo,sans-serif
+
+    * {
+      box-sizing: border-box
     }
 
-    .page{max-width:1180px;margin:24px auto;padding:0 16px}
-    .title{font-size:22px;font-weight:700;margin:4px 0 18px 4px}
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans KR, Apple SD Gothic Neo, sans-serif
+    }
 
-    .toolbar{width:360px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
-    .row{display:grid;grid-template-columns:360px 1fr;gap:20px}
+    .page {
+      max-width: 1180px;
+      margin: 24px auto;
+      padding: 0 16px
+    }
 
-    .field{display:grid;gap:8px;margin-bottom:12px}
-    .label{font-size:14px;color:var(--muted)}
-    select,button{height:44px;border-radius:10px;border:1px solid var(--border);background:#fff;padding:0 12px;font-size:15px}
-    .btn{cursor:pointer}
-    .btn-primary{background:var(--primary);color:#fff;border:none}
-    .btn-primary:active{background:var(--primary-pressed)}
-    .btn-outline{background:#fff}
-    .btn-block{width:100%}
-    .hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 4px 0 18px 4px
+    }
 
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-    @media (max-width:1024px){.grid{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:640px){.row{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.toolbar{width:100%}}
+    .toolbar {
+      width: 360px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px
+    }
 
-    .card{border:1px solid var(--border);border-radius:12px;background:var(--card);display:flex;flex-direction:column;overflow:hidden}
-    .figure{position:relative;width:100%;padding-top:125%;background:#f8fafc;border-bottom:1px solid var(--border)}
+    .row {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px
+    }
+
+    .label {
+      font-size: 14px;
+      color: var(--muted)
+    }
+
+    select,
+    button {
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 0 12px;
+      font-size: 15px
+    }
+
+    .btn {
+      cursor: pointer;
+      transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn:not(:disabled):active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      border: none
+    }
+
+    .btn-primary:active {
+      background: var(--primary-pressed)
+    }
+
+    .btn-outline {
+      background: #fff
+    }
+
+    .btn-block {
+      width: 100%
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 10px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px
+    }
+
+    @media (max-width:1024px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    @media (max-width:640px) {
+      .row {
+        grid-template-columns: 1fr
+      }
+
+      .grid {
+        grid-template-columns: 1fr
+      }
+
+      .toolbar {
+        width: 100%
+      }
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden
+    }
+
+    .figure {
+      position: relative;
+      width: 100%;
+      padding-top: 125%;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border)
+    }
 
     /* 이미지: 완료 시 페이드인 */
-    .figure>img{
-      position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-      opacity:0;transition:opacity .25s ease
+    .figure>img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity .25s ease
     }
-    .figure>img.loaded{opacity:1}
+
+    .figure>img.loaded {
+      opacity: 1
+    }
 
     /* 오버레이: 기본 표시(생성 전 텍스트), 로딩 중에는 스피너 보임, 완료(ready)면 숨김 */
-    .figure .overlay{
-      position:absolute;inset:0;background:rgba(255,255,255,.65);
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      font-size:15px;color:var(--muted)
+    .figure .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, .65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 15px;
+      color: var(--muted)
     }
-    .figure .overlay .spinner{display:none}
-    .figure.loading .overlay .spinner{display:inline-block}
-    .figure.ready .overlay{display:none}
 
-    .spinner{
-      width:18px;height:18px;border-radius:50%;
-      border:2px solid #d1d5db;border-top-color:var(--primary);
-      animation:spin .8s linear infinite
+    .figure .overlay .spinner {
+      display: none
     }
-    @keyframes spin{to{transform:rotate(360deg)}}
 
-    .body{padding:12px;display:grid;gap:8px}
-    .caption{font-size:14px;color:var(--text);min-height:20px}
-    .controls{display:flex;align-items:center;gap:10px}
-    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-    .pill input{width:16px;height:16px}
-    .status.ok{color:var(--ok)} .status.danger{color:var(--danger)}
-    .footer{margin-top:12px;display:flex;gap:10px}
-    .btn-sm{height:36px;font-size:14px;padding:0 10px}
+    .figure.loading .overlay .spinner {
+      display: inline-block
+    }
+
+    .figure.ready .overlay {
+      display: none
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      border-top-color: var(--primary);
+      animation: spin .8s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .body {
+      padding: 12px;
+      display: grid;
+      gap: 8px
+    }
+
+    .caption {
+      font-size: 14px;
+      color: var(--text);
+      min-height: 20px
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .pill input {
+      width: 16px;
+      height: 16px
+    }
+
+    .status.ok {
+      color: var(--ok)
+    }
+
+    .status.danger {
+      color: var(--danger)
+    }
+
+    .footer {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px
+    }
+
+    .btn-sm {
+      height: 36px;
+      font-size: 14px;
+      padding: 0 10px
+    }
   </style>
 </head>
+
 <body>
   <div class="page">
     <div class="title">🌱 이미지 생성</div>
@@ -84,9 +280,9 @@
         <div class="field">
           <div class="label">스타일</div>
           <select id="style">
-            <option {{ 'selected' if style == '동화 일러스트 (기본)' else '' }}>동화 일러스트 (기본)</option>
-            <option {{ 'selected' if style == '연필 스케치' else '' }}>연필 스케치</option>
-            <option {{ 'selected' if style == '수채화 파스텔' else '' }}>수채화 파스텔</option>
+            <option {{ 'selected' if style=='동화 일러스트 (기본)' else '' }}>동화 일러스트 (기본)</option>
+            <option {{ 'selected' if style=='연필 스케치' else '' }}>연필 스케치</option>
+            <option {{ 'selected' if style=='수채화 파스텔' else '' }}>수채화 파스텔</option>
           </select>
         </div>
 
@@ -130,182 +326,183 @@
     </div>
   </div>
 
-<script>
-const grid = document.getElementById('grid');
-const styleSel = document.getElementById('style');
-const allBtn = document.getElementById('btnAll');
-const partialBtn = document.getElementById('btnPartial');
-const backBtn = document.getElementById('btnBack');
-const previewBtn = document.getElementById('btnPreview');
+  <script>
+    const grid = document.getElementById('grid');
+    const styleSel = document.getElementById('style');
+    const allBtn = document.getElementById('btnAll');
+    const partialBtn = document.getElementById('btnPartial');
+    const backBtn = document.getElementById('btnBack');
+    const previewBtn = document.getElementById('btnPreview');
 
-const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
-const getCards = ()=> $$('.card', grid);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    const getCards = () => $$('.card', grid);
 
-/* -------------------- 상태 표시 -------------------- */
-function setStatus(card, txt, cls){
-  const st = card.querySelector('[data-status]');
-  const overlayText = card.querySelector('[data-overlay-text]');
-  if (st) {
-    st.textContent = txt;
-    st.classList.remove('ok','danger');
-    if (cls) st.classList.add(cls);
-  }
-  if (overlayText) overlayText.textContent = txt;
-}
+    /* -------------------- 상태 표시 -------------------- */
+    function setStatus(card, txt, cls) {
+      const st = card.querySelector('[data-status]');
+      const overlayText = card.querySelector('[data-overlay-text]');
+      if (st) {
+        st.textContent = txt;
+        st.classList.remove('ok', 'danger');
+        if (cls) st.classList.add(cls);
+      }
+      if (overlayText) overlayText.textContent = txt;
+    }
 
-function setLoading(card, on){
-  const fig = card.querySelector('.figure');
-  const img = fig.querySelector('img');
-  if (on){
-    fig.classList.remove('ready');
-    fig.classList.add('loading');
-    setStatus(card, '생성 중…');
-    img.classList.remove('loaded');
-  } else {
-    fig.classList.remove('loading');
-  }
-}
+    function setLoading(card, on) {
+      const fig = card.querySelector('.figure');
+      const img = fig.querySelector('img');
+      if (on) {
+        fig.classList.remove('ready');
+        fig.classList.add('loading');
+        setStatus(card, '생성 중…');
+        img.classList.remove('loaded');
+      } else {
+        fig.classList.remove('loading');
+      }
+    }
 
-function updateImage(card, url){
-  const fig = card.querySelector('.figure');
-  const img = fig.querySelector('img');
-  if (!url){
-    setLoading(card, false);
-    setStatus(card, '로드 실패', 'danger');
-    return;
-  }
-  if (img.src === url){
-    img.classList.add('loaded');
-    fig.classList.add('ready');
-    setLoading(card, false);
-    setStatus(card, '');
-    maybeEnablePreview(); // 추가
-    return;
-  }
-  img.onload = () => {
-    img.classList.add('loaded');
-    fig.classList.add('ready');
-    setLoading(card, false);
-    setStatus(card, '');
-    maybeEnablePreview(); // 추가
-  };
-  img.onerror = () => {
-    setLoading(card, false);
-    setStatus(card, '로드 실패', 'danger');
-  };
-  fig.classList.remove('ready');
-  img.src = url;
-}
+    function updateImage(card, url) {
+      const fig = card.querySelector('.figure');
+      const img = fig.querySelector('img');
+      if (!url) {
+        setLoading(card, false);
+        setStatus(card, '로드 실패', 'danger');
+        return;
+      }
+      if (img.src === url) {
+        img.classList.add('loaded');
+        fig.classList.add('ready');
+        setLoading(card, false);
+        setStatus(card, '');
+        maybeEnablePreview(); // 추가
+        return;
+      }
+      img.onload = () => {
+        img.classList.add('loaded');
+        fig.classList.add('ready');
+        setLoading(card, false);
+        setStatus(card, '');
+        maybeEnablePreview(); // 추가
+      };
+      img.onerror = () => {
+        setLoading(card, false);
+        setStatus(card, '로드 실패', 'danger');
+      };
+      fig.classList.remove('ready');
+      img.src = url;
+    }
 
-/* -------------------- 미리보기 버튼 활성화 -------------------- */
-function allLoaded(){
-  return getCards().every(c=>{
-    const img=c.querySelector('.figure img');
-    return !!img.src && img.classList.contains('loaded');
-  });
-}
-function maybeEnablePreview(){
-  if(allLoaded()) previewBtn.disabled=false;
-}
+    /* -------------------- 미리보기 버튼 활성화 -------------------- */
+    function allLoaded() {
+      return getCards().every(c => {
+        const img = c.querySelector('.figure img');
+        return !!img.src && img.classList.contains('loaded');
+      });
+    }
+    function maybeEnablePreview() {
+      if (allLoaded()) previewBtn.disabled = false;
+    }
 
-/* -------------------- API 호출 -------------------- */
-function payloadFrom(cards){
-  return {
-    style: styleSel.value,
-    pages: cards.map(c=>({
-      index: parseInt(c.dataset.index,10),
-      text: (c.dataset.text||'').trim()
-    }))
-  };
-}
-async function callGenerate(body){
-  const res = await fetch('/api/images/generate',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify(body)
-  });
-  if(!res.ok) throw new Error('API '+res.status);
-  const data=await res.json();
-  return Array.isArray(data.images)?data.images:[];
-}
+    /* -------------------- API 호출 -------------------- */
+    function payloadFrom(cards) {
+      return {
+        style: styleSel.value,
+        pages: cards.map(c => ({
+          index: parseInt(c.dataset.index, 10),
+          text: (c.dataset.text || '').trim()
+        }))
+      };
+    }
+    async function callGenerate(body) {
+      const res = await fetch('/api/images/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('API ' + res.status);
+      const data = await res.json();
+      return Array.isArray(data.images) ? data.images : [];
+    }
 
-/* -------------------- 이미지 생성 로직 -------------------- */
-async function generateAll(){
-  const cards=getCards();
-  if(!cards.length)return;
-  cards.forEach(c=>setLoading(c,true));
-  try{
-    const images=await callGenerate(payloadFrom(cards));
-    const byIdx=new Map(images.map(x=>[Number(x.index),x.url]));
-    cards.forEach(card=>{
-      updateImage(card,byIdx.get(Number(card.dataset.index)));
+    /* -------------------- 이미지 생성 로직 -------------------- */
+    async function generateAll() {
+      const cards = getCards();
+      if (!cards.length) return;
+      cards.forEach(c => setLoading(c, true));
+      try {
+        const images = await callGenerate(payloadFrom(cards));
+        const byIdx = new Map(images.map(x => [Number(x.index), x.url]));
+        cards.forEach(card => {
+          updateImage(card, byIdx.get(Number(card.dataset.index)));
+        });
+        maybeEnablePreview(); // 전체 완료 후
+      } catch (e) {
+        cards.forEach(c => { setLoading(c, false); setStatus(c, '요청 실패', 'danger'); });
+      }
+    }
+
+    async function generateSelected() {
+      const selected = getCards().filter(c => c.querySelector('.ck').checked);
+      if (!selected.length) { alert('다시 생성할 카드를 체크하세요.'); return; }
+      selected.forEach(c => setLoading(c, true));
+      try {
+        const images = await callGenerate(payloadFrom(selected));
+        const byIdx = new Map(images.map(x => [Number(x.index), x.url]));
+        selected.forEach(card => {
+          updateImage(card, byIdx.get(Number(card.dataset.index)));
+          card.querySelector('.ck').checked = false;
+        });
+        maybeEnablePreview(); // 추가
+      } catch (e) {
+        selected.forEach(c => { setLoading(c, false); setStatus(c, '요청 실패', 'danger'); });
+      }
+    }
+
+    async function generateOne(card) {
+      setLoading(card, true);
+      try {
+        const images = await callGenerate(payloadFrom([card]));
+        const url = (images[0] && images[0].url) ? images[0].url : '';
+        updateImage(card, url);
+        maybeEnablePreview(); // 추가
+      } catch (e) {
+        setLoading(card, false);
+        setStatus(card, '요청 실패', 'danger');
+      }
+    }
+
+    /* -------------------- 이벤트 -------------------- */
+    if (!allBtn.dataset.bound) {
+      allBtn.dataset.bound = '1';
+      allBtn.addEventListener('click', e => { e.preventDefault(); generateAll(); });
+    }
+    if (!partialBtn.dataset.bound) {
+      partialBtn.dataset.bound = '1';
+      partialBtn.addEventListener('click', e => { e.preventDefault(); generateSelected(); });
+    }
+    if (!backBtn.dataset.bound) {
+      backBtn.dataset.bound = '1';
+      backBtn.addEventListener('click', e => { e.preventDefault(); window.location.href = "/editor?mode=write"; });
+    }
+    if (!previewBtn.dataset.bound) {
+      previewBtn.dataset.bound = '1';
+      previewBtn.addEventListener('click', e => {
+        e.preventDefault();
+        window.location.href = "/preview";
+      });
+    }
+
+    /* -------------------- 카드 초기 상태 -------------------- */
+    getCards().forEach(card => {
+      if (card.dataset.bound) return;
+      card.dataset.bound = '1';
+      const retry = card.querySelector('[data-action="retry"]');
+      retry.addEventListener('click', e => { e.preventDefault(); generateOne(card); });
+      setStatus(card, '생성 전');
     });
-    maybeEnablePreview(); // 전체 완료 후
-  }catch(e){
-    cards.forEach(c=>{setLoading(c,false);setStatus(c,'요청 실패','danger');});
-  }
-}
-
-async function generateSelected(){
-  const selected=getCards().filter(c=>c.querySelector('.ck').checked);
-  if(!selected.length){alert('다시 생성할 카드를 체크하세요.');return;}
-  selected.forEach(c=>setLoading(c,true));
-  try{
-    const images=await callGenerate(payloadFrom(selected));
-    const byIdx=new Map(images.map(x=>[Number(x.index),x.url]));
-    selected.forEach(card=>{
-      updateImage(card,byIdx.get(Number(card.dataset.index)));
-      card.querySelector('.ck').checked=false;
-    });
-    maybeEnablePreview(); // 추가
-  }catch(e){
-    selected.forEach(c=>{setLoading(c,false);setStatus(c,'요청 실패','danger');});
-  }
-}
-
-async function generateOne(card){
-  setLoading(card,true);
-  try{
-    const images=await callGenerate(payloadFrom([card]));
-    const url=(images[0]&&images[0].url)?images[0].url:'';
-    updateImage(card,url);
-    maybeEnablePreview(); // 추가
-  }catch(e){
-    setLoading(card,false);
-    setStatus(card,'요청 실패','danger');
-  }
-}
-
-/* -------------------- 이벤트 -------------------- */
-if(!allBtn.dataset.bound){
-  allBtn.dataset.bound='1';
-  allBtn.addEventListener('click',e=>{e.preventDefault();generateAll();});
-}
-if(!partialBtn.dataset.bound){
-  partialBtn.dataset.bound='1';
-  partialBtn.addEventListener('click',e=>{e.preventDefault();generateSelected();});
-}
-if(!backBtn.dataset.bound){
-  backBtn.dataset.bound='1';
-  backBtn.addEventListener('click',e=>{e.preventDefault();window.location.href="/editor?mode=write";});
-}
-if(!previewBtn.dataset.bound){
-  previewBtn.dataset.bound='1';
-  previewBtn.addEventListener('click',e=>{
-    e.preventDefault();
-    window.location.href="/preview";
-  });
-}
-
-/* -------------------- 카드 초기 상태 -------------------- */
-getCards().forEach(card=>{
-  if(card.dataset.bound)return;
-  card.dataset.bound='1';
-  const retry=card.querySelector('[data-action="retry"]');
-  retry.addEventListener('click',e=>{e.preventDefault();generateOne(card);});
-  setStatus(card,'생성 전');
-});
-</script>
+  </script>
 
 </body>
+
 </html>

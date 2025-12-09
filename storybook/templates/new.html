@@ -1,31 +1,134 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <title>새 스토리 만들기</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg:#f7f8fa; --card:#fff; --txt:#111; --muted:#6b7280;
-      --primary:#16a34a; --primary-ink:#fff; --shadow:0 6px 20px rgba(0,0,0,.06);
-      --outline:#e5e7eb; --radius:14px;
+      --bg: #f7f8fa;
+      --card: #fff;
+      --txt: #111;
+      --muted: #6b7280;
+      --primary: #16a34a;
+      --primary-ink: #fff;
+      --shadow: 0 6px 20px rgba(0, 0, 0, .06);
+      --outline: #e5e7eb;
+      --radius: 14px;
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,AppleSDGothicNeo,'Apple SD Gothic Neo','Noto Sans KR',Segoe UI,Roboto,Helvetica,Arial}
-    .wrap{max-width:1080px;margin:36px auto;padding:0 20px}
-    h1{font-size:32px;margin:0 0 22px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    .card{background:var(--card);border:1px solid var(--outline);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
-    .kicker{display:inline-block;background:#eef2ff;color:#3730a3;font-weight:700;border-radius:999px;padding:6px 10px;font-size:12px;margin-bottom:10px}
-    .title{font-size:22px;margin:6px 0 10px}
-    .desc{color:var(--muted);line-height:1.6;margin:0 0 18px}
-    .row{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{appearance:none;border:1px solid var(--outline);background:#fff;padding:10px 14px;border-radius:10px;font-size:15px;cursor:pointer}
-    .btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-ink);font-weight:700}
-    a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center;justify-content:center}
-    .back{display:inline-flex;align-items:center;font-size:14px;color:var(--muted);text-decoration:none;margin-bottom:10px}
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--txt);
+      font-family: ui-sans-serif, system-ui, AppleSDGothicNeo, 'Apple SD Gothic Neo', 'Noto Sans KR', Segoe UI, Roboto, Helvetica, Arial
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 36px auto;
+      padding: 0 20px
+    }
+
+    h1 {
+      font-size: 32px;
+      margin: 0 0 22px
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--outline);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px
+    }
+
+    .kicker {
+      display: inline-block;
+      background: #eef2ff;
+      color: #3730a3;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      margin-bottom: 10px
+    }
+
+    .title {
+      font-size: 22px;
+      margin: 6px 0 10px
+    }
+
+    .desc {
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0 0 18px
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--outline);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .btn:not(:disabled):active {
+      transform: translateY(1px);
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--primary-ink);
+      font-weight: 700
+    }
+
+    a.btn {
+      text-decoration: none;
+      color: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .back {
+      display: inline-flex;
+      align-items: center;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 10px
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <a class="back" href="/dashboard">← 대시보드</a>
@@ -62,4 +165,5 @@
     </div>
   </div>
 </body>
+
 </html>

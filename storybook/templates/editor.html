@@ -399,17 +399,44 @@
       return res.json();
     }
 
-    function applyPlotResult(pages){
-      var areas = Array.prototype.slice.call(
-        el.pagesWrap.querySelectorAll('textarea')
-      );
-      (pages || []).forEach(function(p){
-        var idx = p.index || 0;
-        if (areas[idx]) {
-          areas[idx].value = p.text || '';
+      function collectPagesForApi(){
+        var areas = Array.prototype.slice.call(
+          el.pagesWrap.querySelectorAll('textarea')
+        );
+        var kwInputs = Array.prototype.slice.call(
+          el.pagesWrap.querySelectorAll('.page-keywords-input')
+        );
+
+        var pages = [];
+        for (var i = 0; i < areas.length; i++){
+          var text = (areas[i].value || '').trim();
+          var kwStr = kwInputs[i] ? (kwInputs[i].value || '') : '';
+          var keywords = kwStr
+            ? kwStr.split(',').map(function(k){ return k.trim(); }).filter(Boolean)
+            : [];
+
+          pages.push({
+            index: i,
+            text: text,
+            keywords: keywords
+          });
         }
-      });
-    }
+        return pages;
+      }
+
+      function applyPlotResult(pages){
+        if (!pages || !pages.length) return;
+        var areas = Array.prototype.slice.call(
+          el.pagesWrap.querySelectorAll('textarea')
+        );
+        pages.forEach(function(p){
+          var idx = typeof p.index === 'number' ? p.index : 0;
+          if (areas[idx]){
+            areas[idx].value = p.text || '';
+          }
+        });
+      }
+
 
 
     function getStoryMeta(){
@@ -507,6 +534,8 @@
         el.pageCount.value = count;
         renderPageAreas(count, pages);
       }
+
+
     function renderPageAreas(count, preset){
       el.pagesWrap.innerHTML = '';
       for (var i=0;i<count;i++){
@@ -686,27 +715,63 @@
       el.btnPrev.addEventListener('click', function () { history.back(); });
       el.btnHome.addEventListener('click', function () { location.href = '/dashboard'; });
 
-       /* -------------------- AI 추천 (LLM Provider 경유) -------------------- */
+      /* -------------------- AI 추천 (백엔드 API 호출) -------------------- */
       el.btnAiPlot.addEventListener('click', async function(){
+        // 1) 메타 정보 수집
+        var meta = {
+          title: el.title.value || '',
+          genre: (document.getElementById('metaGenre') || {}).value || '',
+          world: (document.getElementById('metaWorld') || {}).value || '',
+          theme: (document.getElementById('metaTheme') || {}).value || '',
+          hero:  (document.getElementById('metaHero')  || {}).value || ''
+        };
+
+        // 2) 페이지 정보 수집
+        var pages = collectPagesForApi();
+        if (!pages.length){
+          // 페이지가 하나도 없으면 기본 개수만큼 빈 페이지 생성
+          var cnt = getPageCount();
+          var empty = [];
+          for (var i = 0; i < cnt; i++){
+            empty.push({ index: i, text: '', keywords: [] });
+          }
+          pages = empty;
+        }
+
+        // 키워드 기반 페이지 수 자동 조정 (기존 옵션 유지)
+        if (el.autoAdjust && el.autoAdjust.checked){
+          // 첫 페이지 키워드 input 기준으로 키워드 개수 계산
+          var kwSampleInput = document.querySelector('.page-keywords-input');
+          if (kwSampleInput){
+            var sampleKw = (kwSampleInput.value || '').split(',').map(function(k){ return k.trim(); }).filter(Boolean);
+            var newCount = clamp(sampleKw.length || pages.length, 1, MAX_PAGES);
+            el.pageCount.value = newCount;
+          }
+        }
+
         try {
-          var count = getPageCount();
-          var meta = getStoryMetaForApi();
-          var pages = [];
-          for (var i=0;i<count;i++){
-            pages.push(getPageStateForApi(i));
+          var res = await fetch('/api/plot/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              meta: meta,
+              pages: collectPagesForApi()
+            })
+          });
+
+          if (!res.ok){
+            toast('AI 플롯 생성 중 오류가 발생했습니다.');
+            return;
           }
-          var payload = { meta: meta, pages: pages };
-          var resp = await callPlotApi(payload);
-          if (resp && resp.pages){
-            applyPlotResult(resp.pages);
-          } else {
-            alert('AI 플롯 응답 형식이 올바르지 않습니다.');
-          }
-        } catch (err){
-          console.error(err);
-          alert('AI 플롯 생성 중 오류가 발생했습니다. (콘솔 로그 참고)');
+
+          var data = await res.json();
+          applyPlotResult(data.pages || []);
+        } catch (e){
+          console.error(e);
+          toast('AI 플롯 생성 요청에 실패했습니다.');
         }
       });
+
 
 
       /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */

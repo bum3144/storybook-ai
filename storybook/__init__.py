@@ -1,5 +1,5 @@
 # storybook/__init__.py
-from flask import Flask
+from flask import Flask, redirect
 from storybook.routes.api import api_bp
 from storybook.routes.ui import ui_bp
 
@@ -23,6 +23,6 @@ def create_app():
 
     @app.route("/")
     def home():
-        return "<h3>AI 그림동화 생성기 서버가 실행 중입니다.<br>👉 /dashboard 로 이동하세요.</h3>"
+        return redirect("/dashboard")
 
     return app

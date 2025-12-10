@@ -184,8 +184,10 @@
       gap:8px;
       flex-wrap:wrap;
     }
+    /* 페이지별 '이전 이야기 이어가기' 라벨은 당분간 UI에서 숨김 */
     .page-continue-label{
-      display:flex;
+      /*display:flex;*/
+      display: none !important;
       align-items:center;
       gap:6px;
       font-size:12px;
@@ -366,27 +368,24 @@
       var kwInputs = Array.prototype.slice.call(
         el.pagesWrap.querySelectorAll('.page-keywords-input')
       );
-      var contChecks = Array.prototype.slice.call(
-        el.pagesWrap.querySelectorAll('.page-continue-chk')
-      );
 
       var text = (areas[idx]?.value || '').trim();
       var kwStr = (kwInputs[idx]?.value || '').trim();
-      var keywords = kwStr ? kwStr.split(',').map(function(k){ return k.trim(); }).filter(Boolean) : [];
-      var cont = contChecks[idx] ? !!contChecks[idx].checked : true;
-      var prevText = '';
-      if (idx > 0 && cont && areas[idx-1]) {
-        prevText = (areas[idx-1].value || '').trim();
-      }
+      var keywords = kwStr
+        ? kwStr.split(',').map(function(k){ return k.trim(); }).filter(Boolean)
+        : [];
 
+      // 당분간은 항상 "이전 이야기 이어가기"가 켜져 있다고 간주하고,
+      // 이전 텍스트는 LLM 목업에서 사용하지 않으므로 비워둠.
       return {
         index: idx,
         text: text,
         keywords: keywords,
-        continue: cont,
-        previous_text: prevText
+        continue: true,
+        previous_text: ''
       };
     }
+
 
     async function callPlotApi(payload){
       var res = await fetch('/api/plot/generate', {

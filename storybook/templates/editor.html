@@ -157,6 +157,45 @@
       height: 10px;
     }
 
+    .page-meta-row{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:6px;
+      font-size:13px;
+    }
+    .page-keywords-label{
+      color:#6b7280;
+      font-size:13px;
+      flex-shrink:0;
+    }
+    .page-keywords-input{
+      flex:1;
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid #e5e7eb;
+      font-size:13px;
+    }
+    .page-tools-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:6px;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .page-continue-label{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      color:#6b7280;
+    }
+    .page-tools-row .page-ai-btn{
+      font-size:12px;
+      padding:6px 10px;
+    }
+
     .mode-pill {
       display: inline-flex;
       gap: 8px;
@@ -199,29 +238,56 @@
         <div class="spacer"></div>
 
         <section id="aiSection">
-          <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
+              <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
 
-          <label>키워드 (쉼표로 구분)</label>
-          <input id="keywordInput" type="text" placeholder="예: 씨앗, 숲, 친구" />
+              <!-- 스토리 전체 메타 정보 -->
+              <div class="spacer"></div>
+              <div style="flex-direction:column; gap:8px">
+                <div>
+                  <label>장르</label>
+                  <input id="metaGenre" type="text" placeholder="예: 모험, 성장, 우정">
+                </div>
+                <div>
+                  <label>배경</label>
+                  <input id="metaWorld" type="text" placeholder="예: 우주, 숲속 마을, 바닷속 왕국">
+                </div>
+                <div>
+                  <label>주제</label>
+                  <input id="metaTheme" type="text" placeholder="예: 용기, 가족, 도전">
+                </div>
+                <div>
+                  <label>주인공</label>
+                  <input id="metaHero" type="text" placeholder="예: 소년 케빈, 고양이 루나">
+                </div>
+              </div>
 
-          <div class="row" style="margin-top:8px">
-            <label style="display:flex; align-items:center; gap:8px; margin:0">
-              <input id="autoAdjustChk" type="checkbox" checked />
-              키워드 개수에 맞춰 페이지 수 자동 조정
-            </label>
-            <span class="muted">(최대 5페이지)</span>
-          </div>
+              <div class="spacer"></div>
+              <div class="muted" style="font-size:12px">
+                위 정보는 전체 스토리의 뼈대(장르/배경/주제/주인공)를 만들 때 사용됩니다.<br/>
+                페이지별로는 오른쪽에서 개별 키워드를 입력할 수 있어요.
+              </div>
 
-          <div class="spacer"></div>
-          <button id="btnAiPlot" class="btn primary" style="width:100%">AI로 추천 플롯 생성</button>
+              <div class="spacer"></div>
 
-          <div class="spacer"></div>
-          <div class="muted">※ 현재는 간단한 목업 모델을 사용합니다. (실제 Gemini/Imagen은 다음 단계 연동)</div>
+              <div class="row" style="margin-top:8px">
+                <label style="display:flex; align-items:center; gap:8px; margin:0">
+                  <input id="autoAdjustChk" type="checkbox" checked/>
+                  키워드/페이지 개수에 맞춰 페이지 수 자동 조정
+                </label>
+                <span class="muted">(최대 5페이지)</span>
+              </div>
 
-          <div class="spacer"></div>
-          <hr style="border:none;border-top:1px solid #eee;" />
-          <div class="spacer"></div>
+              <div class="spacer"></div>
+              <button id="btnAiPlot" class="btn primary" style="width:100%">AI로 추천 플롯 생성</button>
+
+              <div class="spacer"></div>
+              <div class="muted">※ 현재는 간단한 규칙 기반 모델을 사용합니다. (향후 Gemini/LLM 연동 예정)</div>
+
+              <div class="spacer"></div>
+              <hr style="border:none;border-top:1px solid #eee;"/>
+              <div class="spacer"></div>
         </section>
+
 
         <div class="btnbar">
           <!-- 1줄: 이전/대시보드/임시 저장 -->
@@ -260,24 +326,109 @@
       var MAX_PAGES = 5;
       var DEFAULT_COUNT = 3;
 
-      var el = {
-        title: document.getElementById('titleInput'),
-        pageCount: document.getElementById('pageCountInput'),
-        pagesWrap: document.getElementById('pagesWrap'),
-        btnAdd: document.getElementById('btnAddPage'),
-        btnDel: document.getElementById('btnDelPage'),
-        keyword: document.getElementById('keywordInput'),
-        autoAdjust: document.getElementById('autoAdjustChk'),
-        btnAiPlot: document.getElementById('btnAiPlot'),
-        btnPrev: document.getElementById('btnPrev'),
-        btnHome: document.getElementById('btnHome'),
-        btnSave: document.getElementById('btnSave'),
-        btnToImages: document.getElementById('btnToImages'),
-        btnToggleMode: document.getElementById('btnToggleMode'),
-        modePill: document.getElementById('modePill')
-      };
+    var el = {
+      title: document.getElementById('titleInput'),
+      pageCount: document.getElementById('pageCountInput'),
+      pagesWrap: document.getElementById('pagesWrap'),
+      btnAdd: document.getElementById('btnAddPage'),
+      btnDel: document.getElementById('btnDelPage'),
+      metaGenre: document.getElementById('metaGenre'),
+      metaWorld: document.getElementById('metaWorld'),
+      metaTheme: document.getElementById('metaTheme'),
+      metaHero: document.getElementById('metaHero'),
+      autoAdjust: document.getElementById('autoAdjustChk'),
+      btnAiPlot: document.getElementById('btnAiPlot'),
+      btnPrev: document.getElementById('btnPrev'),
+      btnHome: document.getElementById('btnHome'),
+      btnSave: document.getElementById('btnSave'),
+      btnToImages: document.getElementById('btnToImages'),
+      btnToggleMode: document.getElementById('btnToggleMode'),
+      modePill: document.getElementById('modePill')
+    };
+
 
       /* -------------------- 유틸 -------------------- */
+
+    function getStoryMeta(){
+      return {
+        genre: (el.metaGenre.value || '').trim(),
+        world: (el.metaWorld.value || '').trim(),
+        theme: (el.metaTheme.value || '').trim(),
+        hero: (el.metaHero.value || '').trim()
+      };
+    }
+
+    function getPageKeywordStrings(){
+      var inputs = Array.prototype.slice.call(
+        el.pagesWrap.querySelectorAll('.page-keywords-input')
+      );
+      return inputs.map(function(input){
+        return (input.value || '').trim();
+      });
+    }
+
+    function parseKeywords(str){
+      if (!str) return [];
+      return str.split(',').map(function(k){ return k.trim(); }).filter(Boolean);
+    }
+
+    function getContinueFlags(count){
+      var checks = Array.prototype.slice.call(
+        el.pagesWrap.querySelectorAll('.page-continue-chk')
+      );
+      var flags = [];
+      for (var i=0;i<count;i++){
+        flags[i] = checks[i] ? !!checks[i].checked : true;
+      }
+      return flags;
+    }
+
+    function getStageTexts(){
+      return [
+        '이야기가 시작되는 장면이에요.',
+        '모험이 본격적으로 펼쳐지는 장면이에요.',
+        '뜻밖의 사건이 일어나는 장면이에요.',
+        '가장 긴장되는 클라이맥스 장면이에요.',
+        '따뜻하게 마무리되는 장면이에요.'
+      ];
+    }
+
+    // 한 페이지 문장을 만드는 작은 엔진
+    function makePageSentence(idx, totalCount, meta, pageKwStrs, existingPages, stageTexts, flags){
+      var hero = meta.hero || '주인공';
+      var baseKeywords = [];
+      if (meta.genre) baseKeywords.push(meta.genre);
+      if (meta.world) baseKeywords.push(meta.world);
+      if (meta.theme) baseKeywords.push(meta.theme);
+
+      var pageKws = parseKeywords(pageKwStrs[idx] || '');
+      var focus = pageKws[0] || baseKeywords[0] || ('장면 ' + (idx+1));
+
+      var stageIndex;
+      if (totalCount === 1){
+        stageIndex = 0;
+      } else {
+        stageIndex = Math.round((idx / (totalCount - 1)) * (stageTexts.length - 1));
+      }
+      stageIndex = clamp(stageIndex, 0, stageTexts.length - 1);
+
+      var prevText = (idx > 0 && flags[idx]) ? (existingPages[idx-1] || '') : '';
+      var sentence = '';
+
+      if (idx === 0){
+        sentence = '‘' + hero + '’의 이야기에서, ‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
+      } else {
+        if (prevText && flags[idx]){
+          sentence = '이전 장면을 이어, ‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
+        } else {
+          sentence = '‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
+        }
+      }
+
+      return sentence;
+    }
+
+
       function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
       function stripLeadingNumber(s) {
         if (!s) return "";
@@ -293,25 +444,75 @@
         el.pageCount.value = count;
         renderPageAreas(count, pages);
       }
-      function renderPageAreas(count, preset) {
-        el.pagesWrap.innerHTML = '';
-        for (var i = 0; i < count; i++) {
-          var box = document.createElement('div');
-          box.className = 'page-box';
-          var idx = i + 1;
-          var label = document.createElement('div');
-          label.className = 'page-title';
-          label.textContent = '페이지 ' + idx;
+    function renderPageAreas(count, preset){
+      el.pagesWrap.innerHTML = '';
+      for (var i=0;i<count;i++){
+        var box = document.createElement('div');
+        box.className = 'page-box';
+        var idx = i+1;
 
-          var ta = document.createElement('textarea');
-          ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
-          ta.value = (preset && preset[i]) ? stripLeadingNumber(preset[i]) : '';
+        // 제목
+        var label = document.createElement('div');
+        label.className = 'page-title';
+        label.textContent = '페이지 ' + idx;
 
-          box.appendChild(label);
-          box.appendChild(ta);
-          el.pagesWrap.appendChild(box);
-        }
+        // 페이지 키워드 입력
+        var metaRow = document.createElement('div');
+        metaRow.className = 'page-meta-row';
+
+        var kwLabel = document.createElement('span');
+        kwLabel.className = 'page-keywords-label';
+        kwLabel.textContent = '키워드';
+
+        var kwInput = document.createElement('input');
+        kwInput.type = 'text';
+        kwInput.className = 'page-keywords-input';
+        kwInput.placeholder = '예: 로켓, 발사장, 새벽';
+        kwInput.setAttribute('data-index', i);
+
+        metaRow.appendChild(kwLabel);
+        metaRow.appendChild(kwInput);
+
+        // 텍스트 영역
+        var ta = document.createElement('textarea');
+        ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
+        ta.value = (preset && preset[i]) ? stripLeadingNumber(preset[i]) : '';
+
+        // 페이지 도구: 이어쓰기 + 개별 재생성 버튼
+        var toolsRow = document.createElement('div');
+        toolsRow.className = 'page-tools-row';
+
+        var contLabel = document.createElement('label');
+        contLabel.className = 'page-continue-label';
+
+        var contChk = document.createElement('input');
+        contChk.type = 'checkbox';
+        contChk.className = 'page-continue-chk';
+        contChk.checked = true;
+        contChk.setAttribute('data-index', i);
+
+        contLabel.appendChild(contChk);
+        contLabel.appendChild(document.createTextNode(' 이전 이야기 이어가기'));
+
+        var reBtn = document.createElement('button');
+        reBtn.type = 'button';
+        reBtn.className = 'btn page-ai-btn';
+        reBtn.textContent = '이 페이지만 AI로 다시 쓰기';
+        reBtn.setAttribute('data-index', i);
+
+        toolsRow.appendChild(contLabel);
+        toolsRow.appendChild(reBtn);
+
+        // 조립
+        box.appendChild(label);
+        box.appendChild(metaRow);
+        box.appendChild(ta);
+        box.appendChild(toolsRow);
+
+        el.pagesWrap.appendChild(box);
       }
+    }
+
       function toast(msg) { try { alert(msg); } catch (e) { } }
 
       /* -------------------- 모드 UI 반영 -------------------- */
@@ -359,6 +560,30 @@
         renderPageAreas(DEFAULT_COUNT, []);
       })();
 
+        // 각 페이지에서 "이 페이지만 AI로 다시 쓰기" 버튼
+      el.pagesWrap.addEventListener('click', function(e){
+        var target = e.target;
+        if (!target.classList.contains('page-ai-btn')) return;
+        var idx = parseInt(target.getAttribute('data-index') || '0', 10);
+        if (isNaN(idx)) idx = 0;
+
+        var count = getPageCount();
+        var meta = getStoryMeta();
+        var stageTexts = getStageTexts();
+        var pageKwStrs = getPageKeywordStrings();
+        var flags = getContinueFlags(count);
+        var currentPages = getPages();
+        var newText = makePageSentence(idx, count, meta, pageKwStrs, currentPages, stageTexts, flags);
+
+        // 해당 페이지 텍스트만 교체
+        var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
+        if (areas[idx]){
+          areas[idx].value = newText;
+        }
+      });
+
+
+
       /* -------------------- 이벤트 -------------------- */
       el.pageCount.addEventListener('change', function () {
         var cnt = getPageCount();
@@ -397,59 +622,44 @@
       el.btnPrev.addEventListener('click', function () { history.back(); });
       el.btnHome.addEventListener('click', function () { location.href = '/dashboard'; });
 
-      /* -------------------- AI 추천 (간단 플롯 엔진) -------------------- */
+      /* -------------------- AI 추천 (간단 작가형 엔진) -------------------- */
       el.btnAiPlot.addEventListener('click', function(){
-        var raw = (el.keyword.value || '').trim();
-        if (!raw) return toast('키워드를 입력해 주세요.');
-
-        // 쉼표 기준 키워드 분리
-        var kws = raw.split(',').map(function(k){ return k.trim(); }).filter(Boolean);
-        if (!kws.length) return toast('키워드를 쉼표(,)로 구분해 다시 입력해 주세요.');
-
-        var title = (el.title.value || '').trim();
-        var hero = title || (kws[0] || '이야기');
-
-        // 페이지 수 결정 (체크박스에 따라 자동 조정)
         var count = getPageCount();
+        var meta = getStoryMeta();
+        var stageTexts = getStageTexts();
+        var pageKwStrs = getPageKeywordStrings();
+        var currentPages = getPages();
+
+        // 자동 조정: 페이지 수 < 현재 페이지 수이면 늘려줌 (간단 버전)
         if (el.autoAdjust && el.autoAdjust.checked){
-          count = clamp(kws.length || DEFAULT_COUNT, 1, MAX_PAGES);
-          el.pageCount.value = count;
+          // 페이지 키워드가 입력된 개수 기준으로 최소 페이지 수 설정
+          var nonEmpty = pageKwStrs.filter(function(s){ return s && s.trim(); }).length;
+          var target = nonEmpty || count;
+          target = clamp(target, 1, MAX_PAGES);
+          if (target !== count){
+            count = target;
+            el.pageCount.value = count;
+            // 페이지 수가 바뀌었으니 영역 재생성
+            renderPageAreas(count, currentPages.slice(0, count));
+            currentPages = getPages();
+            pageKwStrs = getPageKeywordStrings();
+          }
         }
 
-        // 5단 구조(시작 → 전개 → 사건 → 위기 → 마무리)에 따른 문장 템플릿
-        var stageTexts = [
-          '이야기가 시작되는 장면이에요.',
-          '모험이 본격적으로 펼쳐지는 장면이에요.',
-          '뜻밖의 사건이 일어나는 장면이에요.',
-          '가장 긴장되는 클라이맥스 장면이에요.',
-          '따뜻하게 마무리되는 장면이에요.'
-        ];
-
+        var flags = getContinueFlags(count);
         var pages = [];
-        for (var i = 0; i < count; i++) {
-          var focus = kws[Math.min(i, kws.length - 1)] || ('장면 ' + (i + 1));
-
-          // 페이지 인덱스를 0~4 단계로 매핑
-          var stageIndex;
-          if (count === 1) {
-            stageIndex = 0;
-          } else {
-            stageIndex = Math.round((i / (count - 1)) * (stageTexts.length - 1));
-          }
-          stageIndex = clamp(stageIndex, 0, stageTexts.length - 1);
-
-          var sentence = '‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
-
-          // 첫 페이지에는 제목(또는 첫 키워드)을 살짝 넣어줌
-          if (i === 0) {
-            sentence = '‘' + hero + '’의 이야기에서, ' + sentence;
-          }
-
-          pages.push(sentence);
+        for (var i=0;i<count;i++){
+          var text = makePageSentence(i, count, meta, pageKwStrs, pages, stageTexts, flags);
+          pages.push(text);
         }
 
-        setPages(pages);
+        // textarea들만 교체 (페이지 키워드는 그대로 유지)
+        var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
+        for (var j=0;j<pages.length;j++){
+          if (areas[j]) areas[j].value = pages[j];
+        }
       });
+
 
       /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */
       function collectForImages() {

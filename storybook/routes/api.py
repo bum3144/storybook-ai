@@ -65,6 +65,7 @@ def generate_plot():
     """
     에디터에서 보낸 스토리 메타 + 페이지 정보를 이용해
     각 페이지별 '동화 스토리 문장'을 만들어 반환합니다.
+    지금은 규칙 기반 목업이지만, 나중에 실제 LLM 호출로 교체하기 쉽도록 구조를 잡았습니다.
 
     요청 JSON 예:
     {
@@ -73,15 +74,14 @@ def generate_plot():
         "genre": "모험",
         "world": "우주",
         "theme": "용기",
-        "hero": "소년 케빈"
+        "hero": "토르"
       },
       "pages": [
         {
           "index": 0,
           "text": "",
-          "keywords": ["로켓", "작업실", "밤"],
-          "continue": true,
-          "previous_text": ""
+          "keywords": ["지구에서 마리아는 왕따", "우주 비행사 꿈"],
+          "continue": true
         },
         ...
       ]
@@ -106,21 +106,27 @@ def generate_plot():
 
     total = max(1, len(pages))
 
-    def build_page_story(i, page, prev_story: str) -> str:
-        idx = int(page.get("index", i))
-        keywords = [str(k).strip() for k in (page.get("keywords") or []) if str(k).strip()]
-        cont = bool(page.get("continue", True))
-
-        # 키워드 문구
-        if keywords:
-            if len(keywords) == 1:
-                kw_phrase = f"‘{keywords[0]}’"
-            else:
-                kw_phrase = "‘" + "’, ‘".join(keywords) + "’"
+    def split_keywords(raw_list):
+        """첫 번째 키워드는 중심 키워드, 나머지는 부가 키워드 문구로 묶는다."""
+        kws = [str(k).strip() for k in (raw_list or []) if str(k).strip()]
+        if not kws:
+            return "", ""
+        main = kws[0]
+        if len(kws) == 1:
+            return main, ""
+        rest = kws[1:]
+        if len(rest) == 1:
+            rest_phrase = rest[0]
         else:
-            kw_phrase = "특별한 무언가"
+            # A, B, C 그리고 D 형태
+            rest_phrase = ", ".join(rest[:-1]) + " 그리고 " + rest[-1]
+        return main, rest_phrase
 
-        # 장면 단계에 따라 분위기 설정
+    def build_page_story(i, page) -> str:
+        raw_kws = page.get("keywords") or []
+        main_kw, rest_kw = split_keywords(raw_kws)
+
+        # 장면 단계에 따라 분위기 나누기 (0~4)
         if total == 1:
             stage_idx = 0
         else:
@@ -128,59 +134,106 @@ def generate_plot():
         stage_idx = max(0, min(4, stage_idx))
 
         world_part = f"{world}에서 " if world else ""
-        theme_part = ""
-        if theme:
-            theme_part = f" 이 순간, {hero}는 서서히 '{theme}'의 의미를 깨닫기 시작합니다."
 
-        # 페이지별 기본 문장 패턴
+        # --- 장면별 기본 문장 패턴 (설명문이 아닌 '이야기체'로) ---
         if i == 0:
-            # 1페이지: 시작 장면
-            first = (
-                f"{world_part}{hero}는 {kw_phrase}을(를) 바라보며 "
-                f"특별한 모험이 시작될 것 같은 예감을 받습니다."
-            )
-            second = " 평범했던 하루가 조용히 흔들리기 시작한 그때, 작은 선택 하나가 모든 것을 바꾸려 하고 있었습니다."
+            # 첫 장면: 시작
+            if main_kw:
+                if rest_kw:
+                    first = (
+                        f"{world_part}{hero}는 {main_kw} 속에서 하루하루를 보내며, "
+                        f"{rest_kw}에 대한 생각으로 가슴이 두근거리기 시작합니다."
+                    )
+                else:
+                    first = (
+                        f"{world_part}{hero}는 {main_kw}을(를) 바라보며 "
+                        f"곧 특별한 모험이 시작될 것 같은 예감을 받습니다."
+                    )
+            else:
+                first = (
+                    f"{world_part}{hero}는 아직 이름 붙일 수 없는 무언가를 향해 "
+                    f"조용히 마음이 끌리는 것을 느낍니다."
+                )
         else:
-            # 2페이지 이후
-            if cont and prev_story:
-                lead = "앞선 장면에서 이어져, "
-            else:
-                lead = "새로운 장면에서, "
-
+            # 이후 장면들: '앞선 장면에서 이어져' 같은 템플릿 문구는 사용하지 않고,
+            # 자연스럽게 이어지는 느낌만 살린다.
             if stage_idx <= 1:
-                first = (
-                    f"{lead}{hero}는 {world_part}{kw_phrase}과(와) 함께 "
-                    f"조금 더 깊숙한 모험 속으로 발을 내딛습니다."
-                )
-                second = " 가슴이 두근거리지만, 동시에 기대와 설렘이 뒤섞여 눈을 반짝입니다."
+                # 초반 전개
+                if main_kw:
+                    first = (
+                        f"{world_part}{hero}는 {main_kw}과(와) 함께 "
+                        f"조금 더 깊은 모험 속으로 발을 내딛습니다."
+                    )
+                else:
+                    first = (
+                        f"{world_part}{hero}의 발걸음은 서서히 모험의 중심으로 향하고 있습니다."
+                    )
             elif stage_idx <= 2:
-                first = (
-                    f"{lead}{world_part}{kw_phrase} 때문에 "
-                    f"{hero} 앞에 예상치 못한 일이 벌어집니다."
-                )
-                second = " 당황한 표정을 지으면서도, {0}는 물러서지 않고 한 걸음 더 앞으로 나아갑니다.".format(hero)
+                # 사건 발생
+                if main_kw:
+                    if rest_kw:
+                        first = (
+                            f"{world_part}{hero} 앞에 {main_kw}와(과) "
+                            f"{rest_kw}이(가) 얽힌 예상치 못한 일이 벌어집니다."
+                        )
+                    else:
+                        first = (
+                            f"{world_part}{hero} 앞에 {main_kw} 때문에 "
+                            f"예상치 못한 일이 벌어집니다."
+                        )
+                else:
+                    first = (
+                        f"{world_part}{hero}는 갑작스러운 사건을 맞이해 당황하고 맙니다."
+                    )
             elif stage_idx <= 3:
-                first = (
-                    f"{lead}{hero}는 {world_part}{kw_phrase} 속에서 "
-                    f"지금까지와는 비교도 할 수 없는 큰 위기를 맞이합니다."
-                )
-                second = " 하지만 포기하지 않으려는 마음이 점점 더 커지며, 마지막 힘을 끌어모읍니다."
+                # 클라이맥스
+                if main_kw:
+                    first = (
+                        f"{world_part}{hero}는 {main_kw} 속에서 "
+                        f"지금까지와는 비교할 수 없는 큰 위기에 맞섭니다."
+                    )
+                else:
+                    first = (
+                        f"{world_part}{hero}는 드디어 가장 큰 시련과 마주하게 됩니다."
+                    )
             else:
-                first = (
-                    f"{lead}{world_part}{kw_phrase}과(와) 함께 "
-                    f"{hero}의 모험은 서서히 끝을 향해 다가갑니다."
-                )
-                second = " 긴 여정을 지나온 만큼, {0}의 눈빛에는 이전보다 한층 단단해진 마음이 담겨 있습니다.".format(hero)
+                # 마무리
+                if main_kw:
+                    first = (
+                        f"{world_part}{hero}는 {main_kw}과(와) 함께 "
+                        f"긴 모험의 끝자락에 서서 오늘을 되돌아봅니다."
+                    )
+                else:
+                    first = (
+                        f"{world_part}{hero}는 긴 여정을 지나온 뒤, "
+                        f"조용히 숨을 고르며 마음을 정리합니다."
+                    )
 
-        story = first + second + theme_part
-        return story
+        # 장면 단계 설명은 부드럽게 덧붙이기
+        stage_texts = [
+            "이제 막 이야기가 시작되는 순간입니다.",
+            "모험의 흐름이 조금씩 빨라지기 시작합니다.",
+            "뜻밖의 사건으로 이야기가 크게 흔들립니다.",
+            "가장 긴장되는 장면이 펼쳐지고 있습니다.",
+            "이야기는 서서히 따뜻한 결말을 향해 나아갑니다.",
+        ]
+        second = stage_texts[stage_idx]
+
+        text = first + " " + second
+
+        # 공통 주제(테마) 덧붙이기
+        if theme:
+            text += f" 이 장면 속에서도 {hero}는 '{theme}'의 의미를 조금씩 깨닫고 있습니다."
+
+        return text
 
     results = []
-    prev_story_text = ""
     for i, page in enumerate(pages):
-        text = build_page_story(i, page, prev_story_text)
-        results.append({"index": int(page.get("index", i)), "text": text})
-        prev_story_text = text
+        story_text = build_page_story(i, page)
+        results.append({
+            "index": int(page.get("index", i)),
+            "text": story_text,
+        })
 
     return jsonify({"pages": results}), 200
 

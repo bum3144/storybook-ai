@@ -717,22 +717,41 @@
         return { title: el.title.value || '', pages, count: cnt };
       }
 
+      // -------------------- 이미지 생성 페이지로 이동 --------------------
       async function goImages() {
         var data = collectForImages();
 
         // 1) 세션 저장
-        const res = await fetch('/editor/cache', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        if (!res.ok) { toast('데이터 저장 실패'); return; }
+        try {
+          const res = await fetch('/editor/cache', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
 
-        // 2) 이동
-        location.href = '/images';
+          if (!res.ok) {
+            toast('데이터 저장 실패');
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+          toast('데이터 저장 중 오류가 발생했습니다.');
+          return;
+        }
+
+        // 2) 현재 편집 모드에 따라 이동
+        var nextUrl = (MODE === 'ai')
+          ? '/images?mode=ai'
+          : '/images?mode=write';
+
+        window.location.href = nextUrl;
       }
 
-      el.btnToImages.addEventListener('click', function (e) { e.preventDefault(); goImages(); });
+      el.btnToImages.addEventListener('click', function (e) {
+        e.preventDefault();
+        goImages();
+      });
+
     })();
   </script>
 </body>

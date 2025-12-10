@@ -5,6 +5,8 @@ import random  # (현재 직접 사용은 안 하지만 남겨둬도 무방)
 import time
 import hashlib
 
+from storybook.providers.gemini_provider import GeminiProvider
+
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
 # 1차 목업 소스(간헐적 5xx 가능)
@@ -14,6 +16,7 @@ PLACEHOLDER_TMPL = "https://placehold.co/800x1000?text=Image%20{idx}"
 
 # 연결 재사용을 위한 세션
 _http = requests.Session()
+_gemini = GeminiProvider()
 _http.headers.update({"User-Agent": "storybook-dev/0.1"})
 
 
@@ -55,6 +58,45 @@ def editor_cache():
     session["story_pages"] = norm_pages
 
     return jsonify({"ok": True, "count": len(norm_pages)}), 200
+
+
+@api_bp.post("/plot/generate")
+def generate_plot():
+    """
+    프런트에서 스토리 메타 + 페이지별 키워드/텍스트를 받아
+    GeminiProvider(또는 LLM Provider)를 통해 한 줄 요약을 생성한다.
+
+    요청 JSON 예:
+    {
+      "meta": {
+        "title": "우주여행1",
+        "genre": "우주 모험",
+        "world": "지구와 화성",
+        "theme": "성장과 도전",
+        "hero": "소년 케빈"
+      },
+      "pages": [
+        {
+          "index": 0,
+          "keywords": ["로켓", "작업실", "밤"],
+          "continue": true,
+          "text": "",
+          "previous_text": ""
+        },
+        ...
+      ]
+    }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    meta = data.get("meta") or {}
+    pages = data.get("pages") or []
+
+    try:
+        results = _gemini.suggest_story(meta, pages)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"pages": results}), 200
 
 
 @api_bp.get("/editor/cached")

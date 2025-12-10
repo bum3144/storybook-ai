@@ -349,6 +349,70 @@
 
       /* -------------------- 유틸 -------------------- */
 
+    function getStoryMetaForApi(){
+      return {
+        title: (el.title.value || '').trim(),
+        genre: (document.getElementById('metaGenre')?.value || '').trim(),
+        world: (document.getElementById('metaWorld')?.value || '').trim(),
+        theme: (document.getElementById('metaTheme')?.value || '').trim(),
+        hero: (document.getElementById('metaHero')?.value || '').trim()
+      };
+    }
+
+    function getPageStateForApi(idx){
+      var areas = Array.prototype.slice.call(
+        el.pagesWrap.querySelectorAll('textarea')
+      );
+      var kwInputs = Array.prototype.slice.call(
+        el.pagesWrap.querySelectorAll('.page-keywords-input')
+      );
+      var contChecks = Array.prototype.slice.call(
+        el.pagesWrap.querySelectorAll('.page-continue-chk')
+      );
+
+      var text = (areas[idx]?.value || '').trim();
+      var kwStr = (kwInputs[idx]?.value || '').trim();
+      var keywords = kwStr ? kwStr.split(',').map(function(k){ return k.trim(); }).filter(Boolean) : [];
+      var cont = contChecks[idx] ? !!contChecks[idx].checked : true;
+      var prevText = '';
+      if (idx > 0 && cont && areas[idx-1]) {
+        prevText = (areas[idx-1].value || '').trim();
+      }
+
+      return {
+        index: idx,
+        text: text,
+        keywords: keywords,
+        continue: cont,
+        previous_text: prevText
+      };
+    }
+
+    async function callPlotApi(payload){
+      var res = await fetch('/api/plot/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok){
+        throw new Error('AI 플롯 생성 요청 실패: ' + res.status);
+      }
+      return res.json();
+    }
+
+    function applyPlotResult(pages){
+      var areas = Array.prototype.slice.call(
+        el.pagesWrap.querySelectorAll('textarea')
+      );
+      (pages || []).forEach(function(p){
+        var idx = p.index || 0;
+        if (areas[idx]) {
+          areas[idx].value = p.text || '';
+        }
+      });
+    }
+
+
     function getStoryMeta(){
       return {
         genre: (el.metaGenre.value || '').trim(),
@@ -561,26 +625,27 @@
       })();
 
         // 각 페이지에서 "이 페이지만 AI로 다시 쓰기" 버튼
-      el.pagesWrap.addEventListener('click', function(e){
+      el.pagesWrap.addEventListener('click', async function(e){
         var target = e.target;
         if (!target.classList.contains('page-ai-btn')) return;
+
         var idx = parseInt(target.getAttribute('data-index') || '0', 10);
         if (isNaN(idx)) idx = 0;
 
-        var count = getPageCount();
-        var meta = getStoryMeta();
-        var stageTexts = getStageTexts();
-        var pageKwStrs = getPageKeywordStrings();
-        var flags = getContinueFlags(count);
-        var currentPages = getPages();
-        var newText = makePageSentence(idx, count, meta, pageKwStrs, currentPages, stageTexts, flags);
-
-        // 해당 페이지 텍스트만 교체
-        var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
-        if (areas[idx]){
-          areas[idx].value = newText;
+        try {
+          var meta = getStoryMetaForApi();
+          var page = getPageStateForApi(idx);
+          var payload = { meta: meta, pages: [page] };
+          var resp = await callPlotApi(payload);
+          if (resp && resp.pages && resp.pages.length){
+            applyPlotResult(resp.pages);
+          }
+        } catch (err){
+          console.error(err);
+          alert('해당 페이지 AI 재생성 중 오류가 발생했습니다.');
         }
       });
+
 
 
 
@@ -622,41 +687,25 @@
       el.btnPrev.addEventListener('click', function () { history.back(); });
       el.btnHome.addEventListener('click', function () { location.href = '/dashboard'; });
 
-      /* -------------------- AI 추천 (간단 작가형 엔진) -------------------- */
-      el.btnAiPlot.addEventListener('click', function(){
-        var count = getPageCount();
-        var meta = getStoryMeta();
-        var stageTexts = getStageTexts();
-        var pageKwStrs = getPageKeywordStrings();
-        var currentPages = getPages();
-
-        // 자동 조정: 페이지 수 < 현재 페이지 수이면 늘려줌 (간단 버전)
-        if (el.autoAdjust && el.autoAdjust.checked){
-          // 페이지 키워드가 입력된 개수 기준으로 최소 페이지 수 설정
-          var nonEmpty = pageKwStrs.filter(function(s){ return s && s.trim(); }).length;
-          var target = nonEmpty || count;
-          target = clamp(target, 1, MAX_PAGES);
-          if (target !== count){
-            count = target;
-            el.pageCount.value = count;
-            // 페이지 수가 바뀌었으니 영역 재생성
-            renderPageAreas(count, currentPages.slice(0, count));
-            currentPages = getPages();
-            pageKwStrs = getPageKeywordStrings();
+       /* -------------------- AI 추천 (LLM Provider 경유) -------------------- */
+      el.btnAiPlot.addEventListener('click', async function(){
+        try {
+          var count = getPageCount();
+          var meta = getStoryMetaForApi();
+          var pages = [];
+          for (var i=0;i<count;i++){
+            pages.push(getPageStateForApi(i));
           }
-        }
-
-        var flags = getContinueFlags(count);
-        var pages = [];
-        for (var i=0;i<count;i++){
-          var text = makePageSentence(i, count, meta, pageKwStrs, pages, stageTexts, flags);
-          pages.push(text);
-        }
-
-        // textarea들만 교체 (페이지 키워드는 그대로 유지)
-        var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
-        for (var j=0;j<pages.length;j++){
-          if (areas[j]) areas[j].value = pages[j];
+          var payload = { meta: meta, pages: pages };
+          var resp = await callPlotApi(payload);
+          if (resp && resp.pages){
+            applyPlotResult(resp.pages);
+          } else {
+            alert('AI 플롯 응답 형식이 올바르지 않습니다.');
+          }
+        } catch (err){
+          console.error(err);
+          alert('AI 플롯 생성 중 오류가 발생했습니다. (콘솔 로그 참고)');
         }
       });
 

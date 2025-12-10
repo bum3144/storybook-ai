@@ -63,26 +63,34 @@ def editor_cache():
 @api_bp.post("/plot/generate")
 def generate_plot():
     """
-    프런트에서 스토리 메타 + 페이지별 키워드/텍스트를 받아
-    GeminiProvider(또는 LLM Provider)를 통해 한 줄 요약을 생성한다.
+    에디터에서 보낸 스토리 메타 + 페이지 정보를 이용해
+    각 페이지별 '동화 스토리 문장'을 만들어 반환합니다.
 
     요청 JSON 예:
     {
       "meta": {
         "title": "우주여행1",
-        "genre": "우주 모험",
-        "world": "지구와 화성",
-        "theme": "성장과 도전",
+        "genre": "모험",
+        "world": "우주",
+        "theme": "용기",
         "hero": "소년 케빈"
       },
       "pages": [
         {
           "index": 0,
+          "text": "",
           "keywords": ["로켓", "작업실", "밤"],
           "continue": true,
-          "text": "",
           "previous_text": ""
         },
+        ...
+      ]
+    }
+
+    응답 JSON 예:
+    {
+      "pages": [
+        {"index": 0, "text": "실제 스토리 문장..."},
         ...
       ]
     }
@@ -91,12 +99,91 @@ def generate_plot():
     meta = data.get("meta") or {}
     pages = data.get("pages") or []
 
-    try:
-        results = _gemini.suggest_story(meta, pages)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    hero = (meta.get("hero") or "").strip() or "주인공"
+    genre = (meta.get("genre") or "").strip()
+    world = (meta.get("world") or "").strip()
+    theme = (meta.get("theme") or "").strip()
+
+    total = max(1, len(pages))
+
+    def build_page_story(i, page, prev_story: str) -> str:
+        idx = int(page.get("index", i))
+        keywords = [str(k).strip() for k in (page.get("keywords") or []) if str(k).strip()]
+        cont = bool(page.get("continue", True))
+
+        # 키워드 문구
+        if keywords:
+            if len(keywords) == 1:
+                kw_phrase = f"‘{keywords[0]}’"
+            else:
+                kw_phrase = "‘" + "’, ‘".join(keywords) + "’"
+        else:
+            kw_phrase = "특별한 무언가"
+
+        # 장면 단계에 따라 분위기 설정
+        if total == 1:
+            stage_idx = 0
+        else:
+            stage_idx = round((i / (total - 1)) * 4)
+        stage_idx = max(0, min(4, stage_idx))
+
+        world_part = f"{world}에서 " if world else ""
+        theme_part = ""
+        if theme:
+            theme_part = f" 이 순간, {hero}는 서서히 '{theme}'의 의미를 깨닫기 시작합니다."
+
+        # 페이지별 기본 문장 패턴
+        if i == 0:
+            # 1페이지: 시작 장면
+            first = (
+                f"{world_part}{hero}는 {kw_phrase}을(를) 바라보며 "
+                f"특별한 모험이 시작될 것 같은 예감을 받습니다."
+            )
+            second = " 평범했던 하루가 조용히 흔들리기 시작한 그때, 작은 선택 하나가 모든 것을 바꾸려 하고 있었습니다."
+        else:
+            # 2페이지 이후
+            if cont and prev_story:
+                lead = "앞선 장면에서 이어져, "
+            else:
+                lead = "새로운 장면에서, "
+
+            if stage_idx <= 1:
+                first = (
+                    f"{lead}{hero}는 {world_part}{kw_phrase}과(와) 함께 "
+                    f"조금 더 깊숙한 모험 속으로 발을 내딛습니다."
+                )
+                second = " 가슴이 두근거리지만, 동시에 기대와 설렘이 뒤섞여 눈을 반짝입니다."
+            elif stage_idx <= 2:
+                first = (
+                    f"{lead}{world_part}{kw_phrase} 때문에 "
+                    f"{hero} 앞에 예상치 못한 일이 벌어집니다."
+                )
+                second = " 당황한 표정을 지으면서도, {0}는 물러서지 않고 한 걸음 더 앞으로 나아갑니다.".format(hero)
+            elif stage_idx <= 3:
+                first = (
+                    f"{lead}{hero}는 {world_part}{kw_phrase} 속에서 "
+                    f"지금까지와는 비교도 할 수 없는 큰 위기를 맞이합니다."
+                )
+                second = " 하지만 포기하지 않으려는 마음이 점점 더 커지며, 마지막 힘을 끌어모읍니다."
+            else:
+                first = (
+                    f"{lead}{world_part}{kw_phrase}과(와) 함께 "
+                    f"{hero}의 모험은 서서히 끝을 향해 다가갑니다."
+                )
+                second = " 긴 여정을 지나온 만큼, {0}의 눈빛에는 이전보다 한층 단단해진 마음이 담겨 있습니다.".format(hero)
+
+        story = first + second + theme_part
+        return story
+
+    results = []
+    prev_story_text = ""
+    for i, page in enumerate(pages):
+        text = build_page_story(i, page, prev_story_text)
+        results.append({"index": int(page.get("index", i)), "text": text})
+        prev_story_text = text
 
     return jsonify({"pages": results}), 200
+
 
 
 @api_bp.get("/editor/cached")

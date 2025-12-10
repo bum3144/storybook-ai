@@ -333,9 +333,6 @@
     const backBtn = document.getElementById('btnBack');
     const previewBtn = document.getElementById('btnPreview');
 
-    const params = new URL(location.href).searchParams;
-    const MODE = (params.get('mode') || 'write').toLowerCase() === 'ai' ? 'ai' : 'write';
-
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
     const getCards = () => $$('.card', grid);
 
@@ -483,18 +480,17 @@
       partialBtn.dataset.bound = '1';
       partialBtn.addEventListener('click', e => { e.preventDefault(); generateSelected(); });
     }
+
     if (!backBtn.dataset.bound) {
       backBtn.dataset.bound = '1';
       backBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        // 현재 이미지 페이지의 mode 파라미터에 따라 돌아갈 에디터 모드 결정
-        var backUrl = (MODE === 'ai')
-          ? '/editor?mode=ai'
-          : '/editor?mode=write';
-
-        window.location.href = backUrl;
+        // 편집 페이지로 돌아갈 때는 브라우저 뒤로가기 사용
+        // (모드와 입력 내용 모두 그대로 유지)
+        window.history.back();
       });
     }
+
 
     if (!previewBtn.dataset.bound) {
       previewBtn.dataset.bound = '1';
@@ -503,19 +499,6 @@
         window.location.href = "/preview";
       });
     }
-    if (!backBtn.dataset.bound) {
-      backBtn.dataset.bound = '1';
-      backBtn.addEventListener('click', e => {
-        e.preventDefault();
-        // 현재 이미지 페이지의 mode 파라미터에 따라 돌아갈 에디터 모드를 결정
-        const backUrl = (MODE === 'ai')
-          ? '/editor?mode=ai'
-          : '/editor?mode=write';
-
-        window.location.href = backUrl;
-      });
-    }
-
 
     /* -------------------- 카드 초기 상태 -------------------- */
     getCards().forEach(card => {

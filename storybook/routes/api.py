@@ -65,17 +65,29 @@ def editor_cache():
 # A) AI 스토리 플롯 생성 (목업 / LLM 교체용)
 # ------------------------------
 def _generate_story_pages(meta: Dict[str, str], pages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
-    """
-    메타 정보 + 페이지별 키워드를 받아
-    페이지별 스토리 한 단락을 생성하는 목업 엔진.
 
-    나중에 실제 LLM(Gemini/ChatGPT) 연동 시 이 함수 안만 교체하면 됨.
-    """
-    title = (meta.get("title") or "").strip()
-    hero = (meta.get("hero") or "").strip() or "주인공"
-    genre = (meta.get("genre") or "").strip()
-    world = (meta.get("world") or "").strip()
-    theme = (meta.get("theme") or "").strip()
+    def pick_main(value: str) -> str:
+        """
+        콤마로 구분된 문자열이라면 첫 번째 항목만 사용.
+        예: '바다, 숲속, 우주' -> '바다'
+        """
+        if not value:
+            return ""
+        parts = [p.strip() for p in value.split(",") if p.strip()]
+        return parts[0] if parts else value.strip()
+
+    raw_title = (meta.get("title") or "").strip()
+    raw_genre = (meta.get("genre") or "").strip()
+    raw_world = (meta.get("world") or "").strip()
+    raw_theme = (meta.get("theme") or "").strip()
+    raw_hero  = (meta.get("hero")  or "").strip()
+
+    title = pick_main(raw_title)
+    genre = pick_main(raw_genre)
+    world = pick_main(raw_world)
+    theme = pick_main(raw_theme)
+    hero  = pick_main(raw_hero) or "주인공"
+
 
     total = max(1, len(pages))
 

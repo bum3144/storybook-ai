@@ -397,18 +397,57 @@
       el.btnPrev.addEventListener('click', function () { history.back(); });
       el.btnHome.addEventListener('click', function () { location.href = '/dashboard'; });
 
-      /* -------------------- AI 추천 (목업) -------------------- */
-      el.btnAiPlot.addEventListener('click', async function () {
-        var kws = (el.keyword.value || '').split(',').map(k => k.trim()).filter(Boolean);
-        if (!kws.length) return toast('키워드를 입력해 주세요.');
+      /* -------------------- AI 추천 (간단 플롯 엔진) -------------------- */
+      el.btnAiPlot.addEventListener('click', function(){
+        var raw = (el.keyword.value || '').trim();
+        if (!raw) return toast('키워드를 입력해 주세요.');
+
+        // 쉼표 기준 키워드 분리
+        var kws = raw.split(',').map(function(k){ return k.trim(); }).filter(Boolean);
+        if (!kws.length) return toast('키워드를 쉼표(,)로 구분해 다시 입력해 주세요.');
+
+        var title = (el.title.value || '').trim();
+        var hero = title || (kws[0] || '이야기');
+
+        // 페이지 수 결정 (체크박스에 따라 자동 조정)
         var count = getPageCount();
-        if (el.autoAdjust.checked) { count = clamp(kws.length, 1, MAX_PAGES); el.pageCount.value = count; }
+        if (el.autoAdjust && el.autoAdjust.checked){
+          count = clamp(kws.length || DEFAULT_COUNT, 1, MAX_PAGES);
+          el.pageCount.value = count;
+        }
+
+        // 5단 구조(시작 → 전개 → 사건 → 위기 → 마무리)에 따른 문장 템플릿
+        var stageTexts = [
+          '이야기가 시작되는 장면이에요.',
+          '모험이 본격적으로 펼쳐지는 장면이에요.',
+          '뜻밖의 사건이 일어나는 장면이에요.',
+          '가장 긴장되는 클라이맥스 장면이에요.',
+          '따뜻하게 마무리되는 장면이에요.'
+        ];
 
         var pages = [];
         for (var i = 0; i < count; i++) {
-          var w = kws[i] || ('장면 ' + (i + 1));
-          pages.push('‘' + w + '’을 주제로 한 장면.');
+          var focus = kws[Math.min(i, kws.length - 1)] || ('장면 ' + (i + 1));
+
+          // 페이지 인덱스를 0~4 단계로 매핑
+          var stageIndex;
+          if (count === 1) {
+            stageIndex = 0;
+          } else {
+            stageIndex = Math.round((i / (count - 1)) * (stageTexts.length - 1));
+          }
+          stageIndex = clamp(stageIndex, 0, stageTexts.length - 1);
+
+          var sentence = '‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
+
+          // 첫 페이지에는 제목(또는 첫 키워드)을 살짝 넣어줌
+          if (i === 0) {
+            sentence = '‘' + hero + '’의 이야기에서, ' + sentence;
+          }
+
+          pages.push(sentence);
         }
+
         setPages(pages);
       });
 

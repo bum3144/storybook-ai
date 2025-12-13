@@ -29,7 +29,7 @@ class GeminiProvider:
             # 유료 계정이므로 Limit: 0 에러 없이 작동할 겁니다.
             self.model_name = "gemini-2.0-flash"
 
-            print(f"👀 [Storybook] 모델명: {self.model_name} (유료모드: 무제한/저비용)")
+            print(f"👀 [Storybook] 모델명: {self.model_name} (유료모드: 저비용)")
 
     def is_available(self) -> bool:
         """API 키가 설정되어 있고 사용 가능한지 확인"""

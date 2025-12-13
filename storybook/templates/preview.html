@@ -3,93 +3,216 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>{{ title or "완성본 동화" }}</title>
+  <title>{{ title }}</title>
   <style>
-    :root { --border:#e5e7eb; --muted:#6b7280; --brand:#2563eb; }
-    *{box-sizing: border-box}
-    body{margin:0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; color:#111827; background:#fff}
-    .wrap{max-width:1200px; margin:24px auto; padding:0 16px}
-    .header{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px}
-    .title{font-size:20px; font-weight:700}
-    .topbar a{color:#374151; text-decoration:none; border:1px solid var(--border); padding:8px 12px; border-radius:10px}
+    :root { --border:#e5e7eb; --brand:#2563eb; --danger:#ef4444; }
+    body{margin:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#fff; color:#111}
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
 
-    .viewer{display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:center; border:1px solid var(--border); border-radius:14px; padding:18px; min-height:520px}
-    .imgbox{width:100%; aspect-ratio:4/5; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#f8fafc}
-    .imgbox img{width:100%; height:100%; object-fit:cover; display:block}
-    .textbox{line-height:1.8; font-size:16px; white-space:pre-wrap}
+    /* 상단 헤더 */
+    .header{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #eee}
+    .title{font-size:24px; font-weight:700}
+    .actions{display:flex; gap:10px}
 
-    .nav{position:relative}
-    .arrow{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:999px; border:1px solid var(--border); background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.06); cursor:pointer}
-    .arrow.left{left:-62px}
-    .arrow.right{right:-62px}
+    .btn{padding:8px 14px; border-radius:8px; text-decoration:none; font-size:14px; cursor:pointer; border:1px solid #ddd; background:#fff; color:#333}
+    .btn:hover{background:#f9fafb}
+    .btn.primary{background:var(--brand); color:#fff; border-color:var(--brand)}
+    .btn.danger{color:var(--danger); border-color:var(--danger)}
+    .btn.danger:hover{background:#fef2f2}
 
-    .thumbs{display:flex; gap:10px; overflow-x:auto; padding:14px 0; margin-top:14px; border-top:1px solid var(--border)}
-    .thumb{flex:0 0 120px; border:2px solid transparent; border-radius:10px; cursor:pointer; background:#f8fafc}
-    .thumb img{width:100%; aspect-ratio:4/5; object-fit:cover; display:block; border-radius:8px}
-    .thumb.active{border-color:var(--brand)}
-    .caption{font-size:13px; color:var(--muted); margin-top:6px; text-align:center}
+    /* 뷰어 영역 (화살표 포함) */
+    .viewer-container { position: relative; display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 500px; }
+    .viewer { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; width: 100%; }
+
+    .img-box { width: 100%; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 1px solid #eee; background: #f8f9fa; }
+    .img-box img { width: 100%; height: 100%; object-fit: cover; }
+    .text-box { font-size: 18px; line-height: 1.7; white-space: pre-wrap; padding: 20px; }
+
+    /* 좌우 화살표 버튼 */
+    .arrow {
+        width: 50px; height: 50px; border-radius: 50%; border: 1px solid #ddd; background: #fff;
+        font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10;
+        user-select: none;
+    }
+    .arrow:hover { background: #f0f0f0; }
+    .arrow:active { transform: translateY(1px); }
+
+    /* 하단 썸네일 */
+    .thumbs{display:flex; gap:10px; margin-top:30px; overflow-x:auto; padding-bottom:10px}
+    .thumb{flex:0 0 100px; cursor:pointer; border:2px solid transparent; border-radius:8px; opacity:0.6; transition:0.2s}
+    .thumb:hover{opacity:1}
+    .thumb.active{border-color:var(--brand); opacity:1}
+    .thumb img{width:100%; height:100px; object-fit:cover; border-radius:6px}
+
+    /* 인쇄(PDF) 스타일 - 가로형(Landscape Book Layout) */
+    @page {
+        size: A4 landscape; /* 가로 방향 설정 */
+        margin: 0;
+    }
+    @media print {
+      body { background: #fff; }
+      .header, .thumbs, .arrow, .nav-hint, .viewer-container { display: none !important; }
+
+      .wrap { max-width: 100%; padding: 0; margin: 0; }
+
+      /* 인쇄용 리스트 보이기 */
+      .print-only-list { display: block !important; }
+
+      /* 각 페이지(펼침면) 스타일 */
+      .print-spread {
+          display: flex;
+          flex-direction: row; /* 가로 배치 */
+          width: 100vw;
+          height: 100vh;
+          break-after: page; /* 페이지 넘김 */
+          page-break-after: always;
+          align-items: center;
+          justify-content: center;
+      }
+
+      /* 왼쪽 그림 */
+      .print-left {
+          width: 50%;
+          height: 100%;
+          padding: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+      }
+      .print-left img {
+          max-width: 100%;
+          max-height: 90%;
+          object-fit: contain;
+          border-radius: 8px;
+          border: 1px solid #eee;
+      }
+
+      /* 오른쪽 글 */
+      .print-right {
+          width: 50%;
+          height: 100%;
+          padding: 60px;
+          display: flex;
+          align-items: center;
+          justify-content: center; /* 중앙 정렬 */
+          font-size: 22px;
+          line-height: 2.0;
+          white-space: pre-wrap;
+          box-sizing: border-box;
+      }
+    }
+
+    .print-only-list { display: none; }
   </style>
 </head>
-<body>
+<body id="body">
   <div class="wrap">
     <div class="header">
-      <div class="title">📖 {{ title or "완성본 동화" }}</div>
-      <div class="topbar">
-        <a href="/images">← 이미지 생성으로</a>
+      <div class="title">📖 {{ title }}</div>
+      <div class="actions">
+        <a href="/dashboard" class="btn">대시보드</a>
+
+        <a href="/images" class="btn">← 이미지 생성으로</a>
+        <button onclick="handlePrint()" class="btn primary">PDF 저장 / 인쇄</button>
+        <button onclick="handleDelete()" class="btn danger">삭제</button>
       </div>
     </div>
 
-    <div class="viewer nav">
-      <button class="arrow left" id="prevBtn">‹</button>
-      <div class="imgbox"><img id="bigImg" alt="page image"/></div>
-      <div class="textbox" id="bigText"></div>
-      <button class="arrow right" id="nextBtn">›</button>
+    <div class="viewer-container">
+        <button class="arrow" onclick="moveSlide(-1)">‹</button>
+
+        <div class="viewer">
+            <div class="img-box"><img id="mainImg" src="" alt="scene"></div>
+            <div class="text-box" id="mainText"></div>
+        </div>
+
+        <button class="arrow" onclick="moveSlide(1)">›</button>
     </div>
 
-    <div class="thumbs" id="thumbs">
+    <div class="thumbs" id="thumbsList">
       {% for p in pages %}
-      <div class="thumb" data-index="{{ p.index }}">
-        <img src="{{ p.url }}" alt="p{{ p.index }}"/>
-        <div class="caption">{{ p.index }}. {{ p.text or '' }}</div>
+      <div class="thumb" onclick="changePage({{ loop.index0 }})">
+        <img src="{{ p.url }}" alt="p{{ p.index }}">
       </div>
       {% endfor %}
     </div>
   </div>
 
+  <div class="print-only-list">
+    <div class="print-spread" style="flex-direction:column; justify-content:center; text-align:center;">
+        <h1 style="font-size:48px; margin-bottom:20px;">{{ title }}</h1>
+        <p style="font-size:20px; color:#666;">AI Storybook</p>
+    </div>
+
+    {% for p in pages %}
+    <div class="print-spread">
+      <div class="print-left">
+          <img src="{{ p.url }}" alt="Scene {{ p.index }}">
+      </div>
+      <div class="print-right">
+          <p>{{ p.text }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
   <script>
     const pages = {{ pages|tojson }};
-    const bigImg = document.getElementById('bigImg');
-    const bigText = document.getElementById('bigText');
-    const thumbs = document.getElementById('thumbs');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
+    const storyId = {{ story_id or 0 }};
 
-    let cur = 0;
+    let currentIndex = 0;
+    const mainImg = document.getElementById('mainImg');
+    const mainText = document.getElementById('mainText');
+    const thumbEls = document.getElementById('thumbsList').children;
 
-    function render(i){
-      cur = Math.max(0, Math.min(pages.length-1, i));
-      const p = pages[cur];
-      bigImg.src = p.url || '';
-      bigText.textContent = p.text || '';
-      Array.from(thumbs.children).forEach((t,idx)=>{
-        if(idx===cur) t.classList.add('active'); else t.classList.remove('active');
+    function changePage(idx) {
+      if(idx < 0 || idx >= pages.length) return;
+      currentIndex = idx;
+
+      const p = pages[idx];
+      mainImg.src = p.url;
+      mainText.textContent = p.text;
+
+      Array.from(thumbEls).forEach((el, i) => {
+        el.classList.toggle('active', i === idx);
       });
     }
 
-    prevBtn.addEventListener('click', ()=> render(cur-1));
-    nextBtn.addEventListener('click', ()=> render(cur+1));
+    function moveSlide(dir) {
+        changePage(currentIndex + dir);
+    }
 
-    Array.from(thumbs.children).forEach((t,idx)=>{
-      t.addEventListener('click', ()=> render(idx));
+    window.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowLeft') moveSlide(-1);
+        if(e.key === 'ArrowRight') moveSlide(1);
     });
 
-    // 키보드 네비게이션
-    window.addEventListener('keydown', (e)=>{
-      if(e.key==='ArrowLeft') render(cur-1);
-      if(e.key==='ArrowRight') render(cur+1);
-    });
+    if(pages.length > 0) changePage(0);
 
-    render(0);
+    function handlePrint() {
+      window.print();
+    }
+
+    async function handleDelete() {
+      if(!storyId) return alert('삭제할 대상이 없습니다.');
+
+      if(confirm('정말 이 동화책을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+        try {
+          const res = await fetch('/api/story/' + storyId, { method: 'DELETE' });
+          const data = await res.json();
+          if(data.ok) {
+            alert('삭제되었습니다.');
+            window.location.href = '/dashboard';
+          } else {
+            alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
+          }
+        } catch(e) {
+          alert('서버 통신 오류');
+        }
+      }
+    }
   </script>
 </body>
 </html>

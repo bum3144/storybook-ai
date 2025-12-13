@@ -1,318 +1,77 @@
 <!doctype html>
 <html lang="ko">
-
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>글 편집</title>
   <style>
-    :root {
-      --gap: 24px;
-      --brand: #2563eb;
-      --muted: #6b7280;
-    }
+    :root { --gap: 24px; --brand: #2563eb; --muted: #6b7280; }
+    body { margin:0; font-family:system-ui,-apple-system,sans-serif; background:#f7f9fb; color:#111827; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    h1 { font-size: 24px; margin: 0 0 18px; display: flex; align-items: center; gap: 10px; }
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 28px; }
+    .panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 18px; }
+    input[type="text"], input[type="number"], textarea, select { width: 100%; border: 1px solid #d1d5db; border-radius: 10px; padding: 10px; box-sizing: border-box; }
+    textarea { height: 120px; resize: vertical; }
+    .btn { border: 1px solid #d1d5db; background: #f8f9fb; padding: 8px 12px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: #f1f5f9; }
+    .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn.primary:hover { background: #1d4ed8; }
+    .btn.success { background: #10b981; color: #fff; border-color: #10b981; }
+    .btn.success:hover { background: #059669; }
+    .btn.warn { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+    .btn.warn:hover { background: #d97706; }
 
-    body {
-      margin:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:#f7f9fb;
-      color:#111827;
-    }
+    .page-box { border: 1px dashed #e5e7eb; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+    .mode-pill { display: inline-flex; padding: 3px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 13px; }
+    .hidden { display: none !important; }
 
-    .wrap {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    h1 {
-      font-size: 24px;
-      margin: 0 0 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 28px;
-    }
-
-    .panel {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 14px;
-      padding: 18px;
-    }
-
-    .panel h2 {
-      font-size: 16px;
-      margin: 0 0 12px;
-    }
-
-    .muted {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    label {
-      display: block;
-      font-size: 13px;
-      color: #374151;
-      margin: 10px 0 6px;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    textarea,
-    select {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #d1d5db;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 14px;
-      background: #fff;
-    }
-
-    textarea {
-      height: 120px;
-      resize: vertical;
-    }
-
-    .btnbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      border: 1px solid #d1d5db;
-      background: #f8f9fb;
-      padding: 8px 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
-    }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: default;
-      box-shadow: none;
-    }
-
-    .btn:not(:disabled):active {
-      transform: translateY(1px);
-    }
-
-    .btn.primary {
-      background: var(--brand);
-      color: #fff;
-      border-color: var(--brand);
-    }
-
-    .btn.ghost {
-      background: #fff;
-    }
-
-    .btn.success {
-      background: #10b981;
-      color: #fff;
-      border-color: #10b981;
-    }
-
-    .btn.warn {
-      background: #f59e0b;
-      color: #fff;
-      border-color: #f59e0b;
-    }
-
-    .pages {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .page-box {
-      border: 1px dashed #e5e7eb;
-      border-radius: 12px;
-      padding: 14px;
-    }
-
-    .page-title {
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .spacer {
-      height: 10px;
-    }
-
-    .page-meta-row{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      margin-bottom:6px;
-      font-size:13px;
-    }
-    .page-keywords-label{
-      color:#6b7280;
-      font-size:13px;
-      flex-shrink:0;
-    }
-    .page-keywords-input{
-      flex:1;
-      padding:6px 8px;
-      border-radius:8px;
-      border:1px solid #e5e7eb;
-      font-size:13px;
-    }
-    .page-tools-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-top:6px;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    /* 페이지별 '이전 이야기 이어가기' 라벨은 당분간 UI에서 숨김 */
-    .page-continue-label{
-      /*display:flex;*/
-      display: none !important;
-      align-items:center;
-      gap:6px;
-      font-size:12px;
-      color:#6b7280;
-    }
-    .page-tools-row .page-ai-btn{
-      font-size:12px;
-      padding:6px 10px;
-    }
-
-    .mode-pill {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      font-size: 13px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #3730a3;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    /* [수정] 버튼 레이아웃 스타일 */
+    .btn-full { width: 100%; margin-top: 10px; padding: 10px; font-weight: 500; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 20px; }
+    .btn-row .btn { padding: 10px 0; font-size: 14px; }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <h1>📝 글 편집 <span id="modePill" class="mode-pill">직접 쓰기</span></h1>
 
     <div class="grid">
-      <!-- 좌측: 기본 정보 + AI 추천 받기 -->
       <div class="panel">
         <h2>기본 정보</h2>
-
         <label>제목</label>
-        <input id="titleInput" type="text" placeholder="예: 지환이의 모험 일기" />
+        <input id="titleInput" type="text" placeholder="예: 지환이의 모험 일기" style="margin-bottom:15px"/>
 
-        <div class="row">
-          <div style="flex:1">
-            <label>페이지 수 (1~5)</label>
-            <input id="pageCountInput" type="number" min="1" max="5" value="3" />
-            <div class="muted">페이지 수를 바꾸면 편집 영역이 자동으로 맞춰집니다.</div>
-          </div>
-        </div>
+        <label>페이지 수 (1~5)</label>
+        <input id="pageCountInput" type="number" min="1" max="5" value="3" />
 
-        <div class="spacer"></div>
-        <hr style="border:none;border-top:1px solid #eee;" />
-        <div class="spacer"></div>
+        <hr style="border:0; border-top:1px solid #eee; margin:20px 0"/>
 
         <section id="aiSection">
-              <h2>AI 추천 받기 <span class="muted" style="font-weight:400;font-size:12px">AI와 함께 쓰기 모드에서 사용 권장</span></h2>
+          <h2>AI 추천 받기</h2>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            <input id="metaGenre" type="text" placeholder="장르 (예: 모험)">
+            <input id="metaWorld" type="text" placeholder="배경 (예: 우주)">
+            <input id="metaTheme" type="text" placeholder="주제 (예: 용기)">
+            <input id="metaHero" type="text" placeholder="주인공 (예: 고양이)">
+          </div>
 
-              <!-- 스토리 전체 메타 정보 -->
-              <div class="spacer"></div>
-              <div style="flex-direction:column; gap:8px">
-                <div>
-                  <label>장르</label>
-                  <input id="metaGenre" type="text" placeholder="예: 모험, 성장, 우정">
-                </div>
-                <div>
-                  <label>배경</label>
-                  <input id="metaWorld" type="text" placeholder="예: 우주, 숲속 마을, 바닷속 왕국">
-                </div>
-                <div>
-                  <label>주제</label>
-                  <input id="metaTheme" type="text" placeholder="예: 용기, 가족, 도전">
-                </div>
-                <div>
-                  <label>주인공</label>
-                  <input id="metaHero" type="text" placeholder="예: 소년 케빈, 고양이 루나">
-                </div>
-              </div>
-
-              <div class="spacer"></div>
-              <div class="muted" style="font-size:12px">
-                위 정보는 전체 스토리의 뼈대(장르/배경/주제/주인공)를 만들 때 사용됩니다.<br/>
-                페이지별로는 오른쪽에서 개별 키워드를 입력할 수 있어요.
-              </div>
-
-              <div class="spacer"></div>
-
-              <div class="row" style="margin-top:8px">
-                <label style="display:flex; align-items:center; gap:8px; margin:0">
-                  <input id="autoAdjustChk" type="checkbox" checked/>
-                  키워드/페이지 개수에 맞춰 페이지 수 자동 조정
-                </label>
-                <span class="muted">(최대 5페이지)</span>
-              </div>
-
-              <div class="spacer"></div>
-              <button id="btnAiPlot" class="btn primary" style="width:100%">AI로 추천 플롯 생성</button>
-
-              <div class="spacer"></div>
-              <div class="muted">※ 현재는 간단한 규칙 기반 모델을 사용합니다. (향후 Gemini/LLM 연동 예정)</div>
-
-              <div class="spacer"></div>
-              <hr style="border:none;border-top:1px solid #eee;"/>
-              <div class="spacer"></div>
+          <button id="btnAiPlot" class="btn primary btn-full">AI로 추천 플롯 생성</button>
         </section>
 
+        <button id="btnToggleMode" class="btn btn-full">직접 쓰기 모드로 전환</button>
 
-        <div class="btnbar">
-          <!-- 1줄: 이전/대시보드/임시 저장 -->
-          <button id="btnPrev" class="btn ghost">이전페이지</button>
-          <button id="btnHome" class="btn ghost">대시보드</button>
+        <div class="btn-row">
+          <button id="btnHome" class="btn">대시보드</button>
           <button id="btnSave" class="btn warn">임시 저장</button>
-        </div>
-
-        <div class="spacer"></div>
-        <div class="btnbar">
-          <!-- 2줄: 모드 토글 + 이미지 생성 -->
-          <button id="btnToggleMode" class="btn">AI와 함께 쓰기</button>
-          <button id="btnToImages" class="btn success" data-action="to-images">이미지 생성</button>
+          <button id="btnToImages" class="btn success">이미지 생성</button>
         </div>
       </div>
 
-      <!-- 우측: 페이지별 문장 -->
       <div class="panel">
         <h2>페이지별 문장</h2>
-        <div id="pagesWrap" class="pages"></div>
-
-        <div class="spacer"></div>
-        <div class="btnbar">
+        <div id="pagesWrap"></div>
+        <div style="margin-top:15px">
           <button id="btnAddPage" class="btn">+ 페이지 추가</button>
           <button id="btnDelPage" class="btn">- 페이지 제거</button>
         </div>
@@ -321,558 +80,185 @@
   </div>
 
   <script>
-    (function () {
-      /* -------------------- 상태 -------------------- */
-      // URL 파라미터로 모드 결정: ?mode=ai → 'ai', 그 외는 'direct'
-      var MODE = (new URL(location.href).searchParams.get('mode') || 'write').toLowerCase() === 'ai' ? 'ai' : 'direct';
-      var MAX_PAGES = 5;
-      var DEFAULT_COUNT = 3;
-
-    var el = {
+    const MAX_PAGES = 5;
+    const el = {
       title: document.getElementById('titleInput'),
       pageCount: document.getElementById('pageCountInput'),
       pagesWrap: document.getElementById('pagesWrap'),
       btnAdd: document.getElementById('btnAddPage'),
       btnDel: document.getElementById('btnDelPage'),
+      btnAiPlot: document.getElementById('btnAiPlot'),
+      modePill: document.getElementById('modePill'),
+      aiSection: document.getElementById('aiSection'),
+      btnToggleMode: document.getElementById('btnToggleMode'),
+      btnToImages: document.getElementById('btnToImages'),
+      btnSave: document.getElementById('btnSave'),
+      btnHome: document.getElementById('btnHome'),
       metaGenre: document.getElementById('metaGenre'),
       metaWorld: document.getElementById('metaWorld'),
       metaTheme: document.getElementById('metaTheme'),
-      metaHero: document.getElementById('metaHero'),
-      autoAdjust: document.getElementById('autoAdjustChk'),
-      btnAiPlot: document.getElementById('btnAiPlot'),
-      btnPrev: document.getElementById('btnPrev'),
-      btnHome: document.getElementById('btnHome'),
-      btnSave: document.getElementById('btnSave'),
-      btnToImages: document.getElementById('btnToImages'),
-      btnToggleMode: document.getElementById('btnToggleMode'),
-      modePill: document.getElementById('modePill')
+      metaHero: document.getElementById('metaHero')
     };
 
-
-      /* -------------------- 유틸 -------------------- */
-
-    function getStoryMetaForApi(){
-      return {
-        title: (el.title.value || '').trim(),
-        genre: (document.getElementById('metaGenre')?.value || '').trim(),
-        world: (document.getElementById('metaWorld')?.value || '').trim(),
-        theme: (document.getElementById('metaTheme')?.value || '').trim(),
-        hero: (document.getElementById('metaHero')?.value || '').trim()
-      };
-    }
-
-    function getPageStateForApi(idx){
-      var areas = Array.prototype.slice.call(
-        el.pagesWrap.querySelectorAll('textarea')
-      );
-      var kwInputs = Array.prototype.slice.call(
-        el.pagesWrap.querySelectorAll('.page-keywords-input')
-      );
-
-      var text = (areas[idx]?.value || '').trim();
-      var kwStr = (kwInputs[idx]?.value || '').trim();
-      var keywords = kwStr
-        ? kwStr.split(',').map(function(k){ return k.trim(); }).filter(Boolean)
-        : [];
-
-      // 당분간은 항상 "이전 이야기 이어가기"가 켜져 있다고 간주하고,
-      // 이전 텍스트는 LLM 목업에서 사용하지 않으므로 비워둠.
-      return {
-        index: idx,
-        text: text,
-        keywords: keywords,
-        continue: true,
-        previous_text: ''
-      };
-    }
-
-
-    async function callPlotApi(payload){
-      var res = await fetch('/api/plot/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok){
-        throw new Error('AI 플롯 생성 요청 실패: ' + res.status);
-      }
-      return res.json();
-    }
-
-      function collectPagesForApi(){
-        var areas = Array.prototype.slice.call(
-          el.pagesWrap.querySelectorAll('textarea')
-        );
-        var kwInputs = Array.prototype.slice.call(
-          el.pagesWrap.querySelectorAll('.page-keywords-input')
-        );
-
-        var pages = [];
-        for (var i = 0; i < areas.length; i++){
-          var text = (areas[i].value || '').trim();
-          var kwStr = kwInputs[i] ? (kwInputs[i].value || '') : '';
-          var keywords = kwStr
-            ? kwStr.split(',').map(function(k){ return k.trim(); }).filter(Boolean)
-            : [];
-
-          pages.push({
-            index: i,
-            text: text,
-            keywords: keywords
-          });
-        }
-        return pages;
-      }
-
-      // [수정 1] 결과 반영 함수: 인덱스를 정확하게 매칭
-      function applyPlotResult(pages){
-        if (!pages || !pages.length) return;
-
-        var areas = Array.prototype.slice.call(
-          el.pagesWrap.querySelectorAll('textarea')
-        );
-
-        pages.forEach(function(p){
-          // 서버는 0부터 시작하는 인덱스를 줍니다.
-          var idx = (typeof p.index === 'number') ? p.index : -1;
-
-          // 해당 인덱스의 칸이 실제로 존재할 때만 값을 채워넣습니다.
-          if (idx >= 0 && idx < areas.length){
-            areas[idx].value = p.text || '';
-
-            // 효과: 값이 바뀐 칸을 깜빡여서 알려줌
-            areas[idx].style.transition = "background-color 0.3s";
-            areas[idx].style.backgroundColor = "#e0f2fe"; // 살짝 파란색
-            setTimeout(function(){
-              areas[idx].style.backgroundColor = "#fff";
-            }, 600);
-          }
-        });
-      }
-
-
-
-    function getStoryMeta(){
-      return {
-        genre: (el.metaGenre.value || '').trim(),
-        world: (el.metaWorld.value || '').trim(),
-        theme: (el.metaTheme.value || '').trim(),
-        hero: (el.metaHero.value || '').trim()
-      };
-    }
-
-    function getPageKeywordStrings(){
-      var inputs = Array.prototype.slice.call(
-        el.pagesWrap.querySelectorAll('.page-keywords-input')
-      );
-      return inputs.map(function(input){
-        return (input.value || '').trim();
-      });
-    }
-
-    function parseKeywords(str){
-      if (!str) return [];
-      return str.split(',').map(function(k){ return k.trim(); }).filter(Boolean);
-    }
-
-    function getContinueFlags(count){
-      var checks = Array.prototype.slice.call(
-        el.pagesWrap.querySelectorAll('.page-continue-chk')
-      );
-      var flags = [];
-      for (var i=0;i<count;i++){
-        flags[i] = checks[i] ? !!checks[i].checked : true;
-      }
-      return flags;
-    }
-
-    function getStageTexts(){
-      return [
-        '이야기가 시작되는 장면이에요.',
-        '모험이 본격적으로 펼쳐지는 장면이에요.',
-        '뜻밖의 사건이 일어나는 장면이에요.',
-        '가장 긴장되는 클라이맥스 장면이에요.',
-        '따뜻하게 마무리되는 장면이에요.'
-      ];
-    }
-
-    // 한 페이지 문장을 만드는 작은 엔진
-    function makePageSentence(idx, totalCount, meta, pageKwStrs, existingPages, stageTexts, flags){
-      var hero = meta.hero || '주인공';
-      var baseKeywords = [];
-      if (meta.genre) baseKeywords.push(meta.genre);
-      if (meta.world) baseKeywords.push(meta.world);
-      if (meta.theme) baseKeywords.push(meta.theme);
-
-      var pageKws = parseKeywords(pageKwStrs[idx] || '');
-      var focus = pageKws[0] || baseKeywords[0] || ('장면 ' + (idx+1));
-
-      var stageIndex;
-      if (totalCount === 1){
-        stageIndex = 0;
-      } else {
-        stageIndex = Math.round((idx / (totalCount - 1)) * (stageTexts.length - 1));
-      }
-      stageIndex = clamp(stageIndex, 0, stageTexts.length - 1);
-
-      var prevText = (idx > 0 && flags[idx]) ? (existingPages[idx-1] || '') : '';
-      var sentence = '';
-
-      if (idx === 0){
-        sentence = '‘' + hero + '’의 이야기에서, ‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
-      } else {
-        if (prevText && flags[idx]){
-          sentence = '이전 장면을 이어, ‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
-        } else {
-          sentence = '‘' + focus + '’을(를) 중심으로, ' + stageTexts[stageIndex];
-        }
-      }
-
-      return sentence;
-    }
-
-
-      function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-      function stripLeadingNumber(s) {
-        if (!s) return "";
-        return String(s).replace(/^\s*\d+[\.\)]\s*/, "");
-      }
-      function getPageCount() { return clamp(parseInt(el.pageCount.value || DEFAULT_COUNT, 10) || DEFAULT_COUNT, 1, MAX_PAGES); }
-      function getPages() {
-        var areas = Array.prototype.slice.call(el.pagesWrap.querySelectorAll('textarea'));
-        return areas.map(function (t) { return (t.value || '').trim(); });
-      }
-      function setPages(pages) {
-        var count = clamp(pages.length, 1, MAX_PAGES);
-        el.pageCount.value = count;
-        renderPageAreas(count, pages);
-      }
-
-
-    function renderPageAreas(count, preset){
-      el.pagesWrap.innerHTML = '';
-      for (var i=0;i<count;i++){
-        var box = document.createElement('div');
-        box.className = 'page-box';
-        var idx = i+1;
-
-        // 제목
-        var label = document.createElement('div');
-        label.className = 'page-title';
-        label.textContent = '페이지 ' + idx;
-
-        // 페이지 키워드 입력
-        var metaRow = document.createElement('div');
-        metaRow.className = 'page-meta-row';
-
-        var kwLabel = document.createElement('span');
-        kwLabel.className = 'page-keywords-label';
-        kwLabel.textContent = '키워드';
-
-        var kwInput = document.createElement('input');
-        kwInput.type = 'text';
-        kwInput.className = 'page-keywords-input';
-        kwInput.placeholder = '예: 로켓, 발사장, 새벽';
-        kwInput.setAttribute('data-index', i);
-
-        metaRow.appendChild(kwLabel);
-        metaRow.appendChild(kwInput);
-
-        // 텍스트 영역
-        var ta = document.createElement('textarea');
-        ta.placeholder = '이 페이지의 한 줄 문장(짧게)';
-        ta.value = (preset && preset[i]) ? stripLeadingNumber(preset[i]) : '';
-
-        // 페이지 도구: 이어쓰기 + 개별 재생성 버튼
-        var toolsRow = document.createElement('div');
-        toolsRow.className = 'page-tools-row';
-
-        var contLabel = document.createElement('label');
-        contLabel.className = 'page-continue-label';
-
-        var contChk = document.createElement('input');
-        contChk.type = 'checkbox';
-        contChk.className = 'page-continue-chk';
-        contChk.checked = true;
-        contChk.setAttribute('data-index', i);
-
-        contLabel.appendChild(contChk);
-        contLabel.appendChild(document.createTextNode(' 이전 이야기 이어가기'));
-
-        var reBtn = document.createElement('button');
-        reBtn.type = 'button';
-        reBtn.className = 'btn page-ai-btn';
-        reBtn.textContent = '이 페이지만 AI로 다시 쓰기';
-        reBtn.setAttribute('data-index', i);
-
-        toolsRow.appendChild(contLabel);
-        toolsRow.appendChild(reBtn);
-
-        // 조립
-        box.appendChild(label);
-        box.appendChild(metaRow);
-        box.appendChild(ta);
-        box.appendChild(toolsRow);
-
-        el.pagesWrap.appendChild(box);
-      }
-    }
-
-      function toast(msg) { try { alert(msg); } catch (e) { } }
-
-      /* -------------------- 모드 UI 반영 -------------------- */
-      function applyModeUI() {
-        var aiSection = document.getElementById('aiSection');
-
-        if (MODE === 'ai') {
-          // 라벨
-          el.btnToggleMode.textContent = '직접쓰기';
-          el.modePill.textContent = 'AI와 함께 쓰기';
-          // AI 섹션 표시
-          if (aiSection) {
-            aiSection.classList.remove('hidden');
-            aiSection.setAttribute('aria-hidden', 'false');
-          }
-        } else {
-          // 라벨
-          el.btnToggleMode.textContent = 'AI와 함께 쓰기';
-          el.modePill.textContent = '직접 쓰기';
-          // AI 섹션 숨김
-          if (aiSection) {
-            aiSection.classList.add('hidden');
-            aiSection.setAttribute('aria-hidden', 'true');
-          }
-        }
-      }
-
-      /* -------------------- 초기 -------------------- */
-      (function init() {
-        applyModeUI();
-
-        // 임시 저장 복구
-        try {
-          var saved = JSON.parse(localStorage.getItem('story_draft') || '{}');
-          if (saved && Array.isArray(saved.pages) && saved.pages.length) {
-            el.title.value = saved.title || '';
-            var cnt = clamp(saved.pages.length, 1, MAX_PAGES);
-            el.pageCount.value = cnt;
-            renderPageAreas(cnt, saved.pages);
-            return;
-          }
-        } catch (e) { }
-        // 기본
-        el.pageCount.value = DEFAULT_COUNT;
-        renderPageAreas(DEFAULT_COUNT, []);
-      })();
-
-      // [수정 2] 개별 페이지 재생성 버튼 클릭 (로딩 표시 추가)
-      el.pagesWrap.addEventListener('click', async function(e){
-        var target = e.target;
-        if (!target.classList.contains('page-ai-btn')) return;
-
-        // 버튼과 원래 텍스트 저장
-        var btn = target;
-        var originalText = btn.textContent;
-        var idx = parseInt(btn.getAttribute('data-index') || '0', 10);
-
-        if (isNaN(idx)) idx = 0;
-
-        try {
-          // 1. 로딩 상태 시작
-          btn.disabled = true;
-          btn.textContent = "✨ 쓰는 중...";
-          btn.style.cursor = "wait";
-          btn.style.opacity = "0.7";
-
-          var meta = getStoryMetaForApi();
-          // 중요: 현재 페이지의 키워드와 내용을 정확히 가져감
-          var page = getPageStateForApi(idx);
-
-          // API 호출
-          var payload = { meta: meta, pages: [page] };
-          var resp = await callPlotApi(payload);
-
-          if (resp && resp.pages && resp.pages.length){
-            applyPlotResult(resp.pages);
-          } else {
-             alert('AI가 내용을 생성하지 못했습니다.');
-          }
-        } catch (err){
-          console.error(err);
-          alert('해당 페이지 AI 재생성 중 오류가 발생했습니다.');
-        } finally {
-          // 2. 로딩 상태 종료 (무조건 실행)
-          btn.disabled = false;
-          btn.textContent = originalText;
-          btn.style.cursor = "pointer";
-          btn.style.opacity = "1";
-        }
-      });
-
-
-
-      /* -------------------- 이벤트 -------------------- */
-      el.pageCount.addEventListener('change', function () {
-        var cnt = getPageCount();
-        var current = getPages();
-        if (current.length < cnt) { while (current.length < cnt) current.push(''); }
-        else if (current.length > cnt) { current = current.slice(0, cnt); }
-        renderPageAreas(cnt, current);
-      });
-
-      el.btnAdd.addEventListener('click', function () {
-        var cnt = getPageCount();
-        if (cnt >= MAX_PAGES) return toast('최대 ' + MAX_PAGES + ' 페이지입니다.');
-        var pages = getPages(); pages.push(''); setPages(pages);
-      });
-
-      el.btnDel.addEventListener('click', function () {
-        var cnt = getPageCount();
-        if (cnt <= 1) return toast('최소 1페이지가 필요합니다.');
-        var pages = getPages(); pages.pop(); setPages(pages);
-      });
-
-      // 모드 토글
-      el.btnToggleMode.addEventListener('click', function () {
-        MODE = (MODE === 'direct') ? 'ai' : 'direct';
-        applyModeUI();
-      });
-
-      // 임시 저장
-      el.btnSave.addEventListener('click', function () {
-        var draft = { title: el.title.value || '', pages: getPages() };
-        localStorage.setItem('story_draft', JSON.stringify(draft));
-        toast('임시 저장 완료');
-      });
-
-      // 이전/대시보드
-      el.btnPrev.addEventListener('click', function () { history.back(); });
-      el.btnHome.addEventListener('click', function () { location.href = '/dashboard'; });
-
-      /* -------------------- AI 추천 (백엔드 API 호출) -------------------- */
-      el.btnAiPlot.addEventListener('click', async function(){
-        // [UX 개선] 로딩 상태 표시 함수
-        function setPlotLoading(isLoading) {
-          if (isLoading) {
-            el.btnAiPlot.disabled = true;
-            el.btnAiPlot.dataset.originalText = el.btnAiPlot.textContent;
-            el.btnAiPlot.textContent = "✨ 작가님이 스토리를 구상 중입니다..."; // 로딩 멘트
-            el.btnAiPlot.style.opacity = "0.7";
-            el.btnAiPlot.style.cursor = "wait";
-          } else {
-            el.btnAiPlot.disabled = false;
-            el.btnAiPlot.textContent = el.btnAiPlot.dataset.originalText || "AI로 추천 플롯 생성";
-            el.btnAiPlot.style.opacity = "1";
-            el.btnAiPlot.style.cursor = "pointer";
-          }
-        }
-
-        // 1) 메타 정보 수집
-        var meta = {
-          title: el.title.value || '',
-          genre: (document.getElementById('metaGenre') || {}).value || '',
-          world: (document.getElementById('metaWorld') || {}).value || '',
-          theme: (document.getElementById('metaTheme') || {}).value || '',
-          hero:  (document.getElementById('metaHero')  || {}).value || ''
-        };
-
-        // 2) 페이지 정보 수집
-        var pages = collectPagesForApi();
-        if (!pages.length){
-          var cnt = getPageCount();
-          var empty = [];
-          for (var i = 0; i < cnt; i++){
-            empty.push({ index: i, text: '', keywords: [] });
-          }
-          pages = empty;
-        }
-
-        // 키워드 기반 페이지 수 자동 조정
-        if (el.autoAdjust && el.autoAdjust.checked){
-          var kwSampleInput = document.querySelector('.page-keywords-input');
-          if (kwSampleInput){
-            var sampleKw = (kwSampleInput.value || '').split(',').map(function(k){ return k.trim(); }).filter(Boolean);
-            var newCount = clamp(sampleKw.length || pages.length, 1, MAX_PAGES);
-            el.pageCount.value = newCount;
-          }
-        }
-
-        try {
-          // ★ 로딩 시작!
-          setPlotLoading(true);
-
-          var res = await fetch('/api/plot/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              meta: meta,
-              pages: collectPagesForApi()
-            })
-          });
-
-          if (!res.ok){
-            toast('AI 플롯 생성 중 오류가 발생했습니다.');
-            return;
-          }
-
-          var data = await res.json();
-          applyPlotResult(data.pages || []);
-
-        } catch (e){
-          console.error(e);
-          toast('AI 플롯 생성 요청에 실패했습니다.');
-        } finally {
-          // ★ 로딩 끝! (성공하든 실패하든 무조건 실행)
-          setPlotLoading(false);
-        }
-      });
-
-
-      /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */
-      function collectForImages() {
-        var pages = getPages();
-        var cnt = clamp(pages.length, 1, MAX_PAGES);
-        if (cnt !== getPageCount()) el.pageCount.value = cnt;
-        return { title: el.title.value || '', pages, count: cnt };
-      }
-
-      // -------------------- 이미지 생성 페이지로 이동 --------------------
-      async function goImages() {
-        var data = collectForImages();
-
-        // 1) 세션 저장
-        try {
-          const res = await fetch('/editor/cache', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          });
-
-          if (!res.ok) {
-            toast('데이터 저장 실패');
-            return;
-          }
-        } catch (err) {
-          console.error(err);
-          toast('데이터 저장 중 오류가 발생했습니다.');
+    let MODE = (new URL(location.href).searchParams.get('mode') || 'write') === 'ai' ? 'ai' : 'direct';
+
+    function init() {
+      applyModeUI();
+      try {
+        const saved = JSON.parse(localStorage.getItem('story_draft'));
+        if(saved && saved.pages) {
+          el.title.value = saved.title || '';
+          renderPages(saved.pages);
           return;
         }
+      } catch(e){}
+      renderPages(Array(3).fill(''));
+    }
 
-        // 2) 현재 편집 모드에 따라 이동
-        var nextUrl = (MODE === 'ai')
-          ? '/images?mode=ai'
-          : '/images?mode=write';
+    function renderPages(contents) {
+      const count = Math.min(Math.max(contents.length, 1), MAX_PAGES);
+      el.pageCount.value = count;
+      el.pagesWrap.innerHTML = '';
 
-        window.location.href = nextUrl;
+      for(let i=0; i<count; i++) {
+        const div = document.createElement('div');
+        div.className = 'page-box';
+        div.innerHTML = `
+          <div style="font-weight:bold; margin-bottom:8px">페이지 ${i+1}</div>
+          <input type="text" class="kw-input" placeholder="키워드 (예: 숲, 아침)" style="margin-bottom:8px">
+          <textarea class="txt-area" placeholder="내용을 입력하세요">${contents[i].text || contents[i] || ''}</textarea>
+          <button class="btn" style="font-size:12px; margin-top:5px" onclick="retryPage(${i})">이 페이지만 AI로 다시 쓰기</button>
+        `;
+        if(contents[i].keywords) div.querySelector('.kw-input').value = contents[i].keywords.join(', ');
+        el.pagesWrap.appendChild(div);
       }
+    }
 
-      el.btnToImages.addEventListener('click', function (e) {
-        e.preventDefault();
-        goImages();
+    function getPagesData() {
+      const boxes = el.pagesWrap.querySelectorAll('.page-box');
+      return Array.from(boxes).map((box, idx) => ({
+        index: idx,
+        text: box.querySelector('.txt-area').value,
+        keywords: box.querySelector('.kw-input').value.split(',').filter(s=>s.trim())
+      }));
+    }
+
+    function applyModeUI() {
+      if(MODE === 'ai') {
+        el.modePill.innerText = 'AI와 함께 쓰기';
+        el.btnToggleMode.innerText = '직접 쓰기 모드로 전환'; // [버튼 텍스트 변경]
+        el.aiSection.classList.remove('hidden');
+      } else {
+        el.modePill.innerText = '직접 쓰기';
+        el.btnToggleMode.innerText = 'AI 모드로 전환'; // [버튼 텍스트 변경]
+        el.aiSection.classList.add('hidden');
+      }
+    }
+
+    // 이벤트 리스너
+    el.pageCount.addEventListener('change', () => {
+      const cnt = parseInt(el.pageCount.value);
+      const current = getPagesData();
+      if(cnt > current.length) while(current.length < cnt) current.push('');
+      else current.length = cnt;
+      renderPages(current);
+    });
+
+    el.btnAdd.onclick = () => {
+      const current = getPagesData();
+      if(current.length < MAX_PAGES) { current.push(''); renderPages(current); }
+    };
+    el.btnDel.onclick = () => {
+      const current = getPagesData();
+      if(current.length > 1) { current.pop(); renderPages(current); }
+    };
+
+    el.btnToggleMode.onclick = () => {
+      MODE = MODE === 'ai' ? 'direct' : 'ai';
+      applyModeUI();
+    };
+
+    el.btnHome.onclick = () => location.href = '/dashboard';
+
+    el.btnSave.onclick = () => {
+      const data = { title: el.title.value, pages: getPagesData() };
+      localStorage.setItem('story_draft', JSON.stringify(data));
+      alert('임시 저장되었습니다.');
+    };
+
+    el.btnToImages.onclick = async () => {
+      const data = { title: el.title.value, pages: getPagesData() };
+      await fetch('/api/editor/cache', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
       });
+      location.href = '/images';
+    };
 
-    })();
+    el.btnAiPlot.onclick = async () => {
+      el.btnAiPlot.disabled = true;
+      el.btnAiPlot.innerText = '생성 중...';
+      try {
+        const meta = {
+          title: el.title.value,
+          genre: el.metaGenre.value,
+          world: el.metaWorld.value,
+          theme: el.metaTheme.value,
+          hero: el.metaHero.value
+        };
+        const pages = getPagesData();
+
+        const res = await fetch('/api/plot/generate', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({meta, pages})
+        });
+        const data = await res.json();
+
+        const boxes = el.pagesWrap.querySelectorAll('.page-box');
+        data.pages.forEach(p => {
+          if(boxes[p.index]) {
+            boxes[p.index].querySelector('.txt-area').value = p.text;
+          }
+        });
+      } catch(e) { alert('오류 발생'); }
+      el.btnAiPlot.disabled = false;
+      el.btnAiPlot.innerText = 'AI로 추천 플롯 생성';
+    };
+
+    window.retryPage = async (idx) => {
+      const boxes = el.pagesWrap.querySelectorAll('.page-box');
+      const box = boxes[idx];
+      const btn = box.querySelector('button');
+      const txtArea = box.querySelector('.txt-area');
+
+      btn.disabled = true;
+      btn.innerText = '쓰는 중...';
+
+      try {
+        const pageData = {
+          index: idx,
+          text: txtArea.value,
+          keywords: box.querySelector('.kw-input').value.split(',')
+        };
+        const meta = { title: el.title.value };
+
+        const res = await fetch('/api/plot/generate', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({meta, pages:[pageData]})
+        });
+        const data = await res.json();
+        if(data.pages && data.pages[0]) {
+          txtArea.value = data.pages[0].text;
+        }
+      } catch(e) { alert('오류'); }
+      btn.disabled = false;
+      btn.innerText = '이 페이지만 AI로 다시 쓰기';
+    };
+
+    init();
   </script>
 </body>
-
 </html>

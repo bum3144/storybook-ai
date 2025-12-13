@@ -1,227 +1,134 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8" />
   <title>대시보드 · AI 그림동화</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root {
-      --bg: #f7f9fb;
-      --card: #fff;
+      --bg: #f3f4f6;
       --text: #111;
-      --muted: #6b7280;
-      --line: #e5e7eb;
+      --card-bg: #fff;
       --primary: #2563eb;
-      --primary-ink: #fff;
-      --chip: #10b981;
-      --card-radius:14px; --card-shadow:0 6px 20px rgba(0,0,0,.06);
+      --muted: #6b7280;
     }
+    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
 
-    * {
-      box-sizing: border-box
-    }
+    header { margin-bottom: 40px; }
+    h1 { font-size: 28px; font-weight: 800; margin: 0; }
+    .subtitle { color: var(--muted); margin-top: 8px; }
 
-    body {
-      margin:0;
-      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    .wrap {
-      max-width: 1080px;
-      margin: 40px auto;
-      padding: 0 20px
-    }
-
-    header {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      margin-bottom: 24px
-    }
-
-    header h1 {
-      font-size: 32px;
-      margin: 0
-    }
-
-    header .crumb {
-      font-size: 14px;
-      color: var(--muted)
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 16px
-    }
-
-    @media (max-width:900px) {
-      .grid {
-        grid-template-columns: repeat(6, 1fr)
-      }
-    }
-
-    @media (max-width:640px) {
-      .grid {
-        grid-template-columns: repeat(4, 1fr)
-      }
-    }
-
-    .card {
-      grid-column: span 6;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow:var(--card-shadow);
-    }
-
-    .title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px
-    }
-
-    .badge {
-      font-size: 12px;
-      color: #0f172a;
-      background: #e2e8f0;
-      padding: 2px 8px;
-      border-radius: 999px
-    }
-
-    .badge.green {
-      background: #d1fae5;
-      color: #065f46
-    }
-
-    .desc {
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 16px
-    }
-
-    .btn {
-      appearance: none;
-      border: 0;
+    /* 상단 배너 영역 (2개) */
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 60px; }
+    .hero-card {
+      position: relative;
+      height: 280px; /* 높이 2배로 키움 */
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      transition: transform 0.2s;
       cursor: pointer;
-      padding: 12px 18px;
-      border-radius: 10px;
-      font-weight: 600;
-      transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease;
-    }
-
-    /* 비활성 버튼 */
-    .btn:disabled {
-      opacity: .5;
-      cursor: default;
-      box-shadow: none;
-    }
-
-    /* 눌렀을 때 살짝 내려가는 느낌 */
-    .btn:not(:disabled):active {
-      transform: translateY(1px);
-    }
-
-    .btn.primary {
-      background: var(--primary);
-      color: var(--primary-ink)
-    }
-
-    .btn.gray {
-      background: #f3f4f6;
-      color: #111;
-      border: 1px solid var(--line)
-    }
-
-    .list {
-      margin-top: 24px
-    }
-
-    .list h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px
-    }
-
-    .list .row {
+      text-decoration: none;
+      color: inherit;
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 30px;
     }
+    .hero-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.12); }
 
-    .chip {
-      font-size: 12px;
-      color: #065f46;
-      background: #d1fae5;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid #a7f3d0
-    }
+    /* 배경 이미지 (임시 그라데이션, 나중에 이미지로 교체 가능) */
+    .hero-card.direct { background: linear-gradient(135deg, #a5f3fc 0%, #3b82f6 100%); }
+    .hero-card.ai { background: linear-gradient(135deg, #fbcfe8 0%, #db2777 100%); }
 
-    .new {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      text-decoration: none
-    }
+    .hero-content { position: relative; z-index: 1; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    .hero-tag { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 99px; font-size: 13px; margin-bottom: 12px; backdrop-filter: blur(4px); }
+    .hero-title { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; }
+    .hero-desc { font-size: 16px; opacity: 0.9; margin: 0; line-height: 1.5; }
 
-    .new svg {
-      width: 18px;
-      height: 18px
+    /* 하단 갤러리 영역 */
+    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr); /* 4칸씩 배치 */
+      gap: 24px;
     }
+    .story-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      transition: transform 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .story-card:hover { transform: translateY(-3px); }
+
+    .thumb { height: 180px; background: #e5e7eb; position: relative; overflow: hidden; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-placeholder { display: flex; align-items: center; justify-content: center; height: 100%; color: #9ca3af; font-size: 40px; }
+
+    .info { padding: 16px; }
+    .info h3 { margin: 0 0 6px 0; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .info .meta { font-size: 13px; color: var(--muted); }
+
+    /* 빈 상태 */
+    .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--muted); background: #fff; border-radius: 16px; border: 2px dashed #e5e7eb; }
+
+    @media (max-width: 900px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .hero-grid { grid-template-columns: 1fr; } .gallery-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <header>
-      <div class="crumb">대시보드</div>
+      <h1>나의 동화책 서재 📚</h1>
+      <div class="subtitle">새로운 이야기를 만들거나, 완성된 동화책을 꺼내보세요.</div>
     </header>
 
-    <h1 style="margin:0 0 20px 0;">나의 동화책</h1>
-
-    <div class="grid">
-
-      <!-- + 새 스토리 만들기 카드 -->
-      <div class="card" style="grid-column:span 6;">
-        <h2 style="margin:0 0 6px 0;">+ 새 스토리 만들기</h2>
-        <p class="desc">제목과 즐겨찾는 스타일을 정하고, 직접 쓰기 또는 AI와 함께 쓰기를 선택하세요.</p>
-        <a class="btn primary new" href="/new" aria-label="새 스토리 만들기">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          새 스토리 만들기
-        </a>
-        <div class="list">
-          <h3>최근 스타일</h3>
-          <div class="row">
-            <span class="chip">동화 일러스트(기본)</span>
-            <span class="chip">연필 스케치</span>
-            <span class="chip">수채화 파스텔</span>
-          </div>
+    <div class="hero-grid">
+      <a href="/editor?mode=write" class="hero-card direct">
+        <div class="hero-content">
+          <span class="hero-tag">✏️ 작가 모드</span>
+          <h2 class="hero-title">직접 이야기 쓰기</h2>
+          <p class="hero-desc">상상한 이야기를 직접 글로 적고,<br/>AI가 그림만 그려주는 모드입니다.</p>
         </div>
+      </a>
+
+      <a href="/editor?mode=ai" class="hero-card ai">
+        <div class="hero-content">
+          <span class="hero-tag">✨ AI 협업 모드</span>
+          <h2 class="hero-title">AI와 함께 만들기</h2>
+          <p class="hero-desc">키워드만 던져주세요.<br/>AI가 멋진 스토리와 그림을 모두 창작해줍니다.</p>
+        </div>
+      </a>
+    </div>
+
+    <h2 class="section-title">완성된 동화책 <span style="font-size:14px; color:#6b7280; font-weight:400">({{ stories|length }}권)</span></h2>
+
+    <div class="gallery-grid">
+      {% for story in stories %}
+      <a href="/preview/{{ story.id }}" class="story-card">
+        <div class="thumb">
+          {% if story.thumb_url %}
+            <img src="{{ story.thumb_url }}" alt="표지" loading="lazy">
+          {% else %}
+            <div class="thumb-placeholder">📖</div>
+          {% endif %}
+        </div>
+        <div class="info">
+          <h3>{{ story.title }}</h3>
+          <div class="meta">{{ story.created_at[:10] }} · {{ story.genre or '동화' }}</div>
+        </div>
+      </a>
+      {% else %}
+      <div class="empty-state">
+        <p>아직 완성된 동화책이 없어요.<br/>위의 카드를 눌러 첫 번째 이야기를 만들어보세요!</p>
       </div>
-
-      <!-- 샘플/저장본 카드 (더미) -->
-      <div class="card" style="grid-column:span 6;">
-        <div class="title">
-          <span class="badge">샘플</span>
-          <h2 style="margin:0;">사라진 오렌지 주스를 찾아서</h2>
-        </div>
-        <p class="desc">AI 추천 플롯으로 만든 예시 동화책입니다. 열어보고 흐름을 참고해도 좋아요.</p>
-        <div style="display:flex; gap:8px; flex-wrap:wrap">
-          <a class="btn gray" href="/editor?mode=ai">AI로 열기</a>
-          <a class="btn gray" href="/editor?mode=write">직접 쓰기로 열기</a>
-        </div>
-      </div>
-
+      {% endfor %}
     </div>
   </div>
 </body>
-
 </html>

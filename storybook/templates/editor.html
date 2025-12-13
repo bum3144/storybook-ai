@@ -424,15 +424,28 @@
         return pages;
       }
 
+      // [수정 1] 결과 반영 함수: 인덱스를 정확하게 매칭
       function applyPlotResult(pages){
         if (!pages || !pages.length) return;
+
         var areas = Array.prototype.slice.call(
           el.pagesWrap.querySelectorAll('textarea')
         );
+
         pages.forEach(function(p){
-          var idx = typeof p.index === 'number' ? p.index : 0;
-          if (areas[idx]){
+          // 서버는 0부터 시작하는 인덱스를 줍니다.
+          var idx = (typeof p.index === 'number') ? p.index : -1;
+
+          // 해당 인덱스의 칸이 실제로 존재할 때만 값을 채워넣습니다.
+          if (idx >= 0 && idx < areas.length){
             areas[idx].value = p.text || '';
+
+            // 효과: 값이 바뀐 칸을 깜빡여서 알려줌
+            areas[idx].style.transition = "background-color 0.3s";
+            areas[idx].style.backgroundColor = "#e0f2fe"; // 살짝 파란색
+            setTimeout(function(){
+              areas[idx].style.backgroundColor = "#fff";
+            }, 600);
           }
         });
       }
@@ -652,28 +665,49 @@
         renderPageAreas(DEFAULT_COUNT, []);
       })();
 
-        // 각 페이지에서 "이 페이지만 AI로 다시 쓰기" 버튼
+      // [수정 2] 개별 페이지 재생성 버튼 클릭 (로딩 표시 추가)
       el.pagesWrap.addEventListener('click', async function(e){
         var target = e.target;
         if (!target.classList.contains('page-ai-btn')) return;
 
-        var idx = parseInt(target.getAttribute('data-index') || '0', 10);
+        // 버튼과 원래 텍스트 저장
+        var btn = target;
+        var originalText = btn.textContent;
+        var idx = parseInt(btn.getAttribute('data-index') || '0', 10);
+
         if (isNaN(idx)) idx = 0;
 
         try {
+          // 1. 로딩 상태 시작
+          btn.disabled = true;
+          btn.textContent = "✨ 쓰는 중...";
+          btn.style.cursor = "wait";
+          btn.style.opacity = "0.7";
+
           var meta = getStoryMetaForApi();
+          // 중요: 현재 페이지의 키워드와 내용을 정확히 가져감
           var page = getPageStateForApi(idx);
+
+          // API 호출
           var payload = { meta: meta, pages: [page] };
           var resp = await callPlotApi(payload);
+
           if (resp && resp.pages && resp.pages.length){
             applyPlotResult(resp.pages);
+          } else {
+             alert('AI가 내용을 생성하지 못했습니다.');
           }
         } catch (err){
           console.error(err);
           alert('해당 페이지 AI 재생성 중 오류가 발생했습니다.');
+        } finally {
+          // 2. 로딩 상태 종료 (무조건 실행)
+          btn.disabled = false;
+          btn.textContent = originalText;
+          btn.style.cursor = "pointer";
+          btn.style.opacity = "1";
         }
       });
-
 
 
 

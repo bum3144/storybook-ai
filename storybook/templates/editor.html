@@ -27,7 +27,7 @@
     .mode-pill { display: inline-flex; padding: 3px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-size: 13px; }
     .hidden { display: none !important; }
 
-    /* [수정] 버튼 레이아웃 스타일 */
+    /* 버튼 그룹 레이아웃 */
     .btn-full { width: 100%; margin-top: 10px; padding: 10px; font-weight: 500; }
     .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 20px; }
     .btn-row .btn { padding: 10px 0; font-size: 14px; }
@@ -144,19 +144,20 @@
       }));
     }
 
+    // 모드(AI/Direct)에 따른 UI 상태 업데이트
     function applyModeUI() {
       if(MODE === 'ai') {
         el.modePill.innerText = 'AI와 함께 쓰기';
-        el.btnToggleMode.innerText = '직접 쓰기 모드로 전환'; // [버튼 텍스트 변경]
+        el.btnToggleMode.innerText = '직접 쓰기 모드로 전환';
         el.aiSection.classList.remove('hidden');
       } else {
         el.modePill.innerText = '직접 쓰기';
-        el.btnToggleMode.innerText = 'AI 모드로 전환'; // [버튼 텍스트 변경]
+        el.btnToggleMode.innerText = 'AI 모드로 전환';
         el.aiSection.classList.add('hidden');
       }
     }
 
-    // 이벤트 리스너
+    // --- 이벤트 핸들러 정의 ---
     el.pageCount.addEventListener('change', () => {
       const cnt = parseInt(el.pageCount.value);
       const current = getPagesData();
@@ -187,20 +188,17 @@
       alert('임시 저장되었습니다.');
     };
 
-    // [수정] 이미지 생성 페이지로 이동 (제목 필수 체크 추가)
+    // 이미지 생성 페이지로 이동 (제목 유효성 검사 포함)
     el.btnToImages.onclick = async () => {
-      // 1. 제목 입력 확인
       const titleVal = el.title.value.trim();
       if (!titleVal) {
         alert('제목을 입력해주세요!');
-        el.title.focus(); // 제목 입력창으로 포커스 이동
-        return; // 진행 중단
+        el.title.focus();
+        return;
       }
 
-      // 2. 데이터 저장 및 이동
       const data = { title: titleVal, pages: getPagesData() };
 
-      // 버튼 비활성화 (중복 클릭 방지)
       el.btnToImages.disabled = true;
       el.btnToImages.innerText = '이동 중...';
 
@@ -219,6 +217,7 @@
       }
     };
 
+    // AI 플롯 생성 요청 핸들러
     el.btnAiPlot.onclick = async () => {
       el.btnAiPlot.disabled = true;
       el.btnAiPlot.innerText = '생성 중...';
@@ -244,7 +243,7 @@
           if(boxes[p.index]) {
             let content = p.text;
 
-            // [수정] 만약 내용이 객체(Object)라면 문자열로 변환해서 보여줌!
+            // AI 응답 타입 예외 처리 (Object -> String)
             if (typeof content === 'object') {
                 content = JSON.stringify(content, null, 2);
             }
@@ -260,6 +259,7 @@
       el.btnAiPlot.innerText = 'AI로 추천 플롯 생성';
     };
 
+    // 개별 페이지 AI 재생성 함수
     window.retryPage = async (idx) => {
       const boxes = el.pagesWrap.querySelectorAll('.page-box');
       const box = boxes[idx];

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Storybook AI · 나만의 동화 만들기</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
 
   <style>
@@ -26,14 +27,14 @@
 
     .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
 
-    /* 헤더 로고 영역 */
+    /* 헤더 및 로고 */
     header { margin-bottom: 50px; text-align: center; }
     .logo-area { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 10px; }
     .logo-icon { font-size: 40px; }
     h1 { font-size: 32px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #111; }
     .subtitle { color: var(--muted); font-size: 16px; margin-top: 8px; }
 
-    /* 메인 배너 (Hero) */
+    /* 메인 배너 (모드 선택) */
     .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 60px; }
     .hero-card {
       position: relative;
@@ -54,7 +55,6 @@
     }
     .hero-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
 
-    /* 배너 배경 스타일 */
     .hero-card.direct {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
         color: #0369a1;
@@ -70,13 +70,13 @@
         padding: 6px 14px;
         border-radius: 99px;
         font-size: 13px; font-weight: 700;
-        margin-bottom: auto; /* 상단 배치 */
+        margin-bottom: auto;
         backdrop-filter: blur(4px);
     }
     .hero-title { font-size: 26px; font-weight: 800; margin: 0 0 8px 0; }
     .hero-desc { font-size: 15px; opacity: 0.9; margin: 0; line-height: 1.5; font-weight: 500; }
 
-    /* 갤러리 영역 */
+    /* 스토리 갤러리 그리드 */
     .section-header {
         display: flex; align-items: center; justify-content: space-between;
         margin-bottom: 24px; padding-bottom: 15px; border-bottom: 2px solid #e5e7eb;
@@ -115,7 +115,7 @@
     .info h3 { margin: 0 0 6px 0; font-size: 17px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .info .meta { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; }
 
-    /* 빈 상태 */
+    /* 빈 데이터 상태 */
     .empty-state {
         grid-column: 1 / -1;
         text-align: center; padding: 80px;
@@ -132,6 +132,7 @@
 <body>
   <div class="top-bar"></div>
   <div class="wrap">
+
     <header>
       <div class="logo-area">
         <span class="logo-icon">📚</span>

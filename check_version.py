@@ -2,7 +2,7 @@ import google.generativeai as genai
 import os
 import sys
 
-# [수정] 여기에 아까 발급받은 '유료 프로젝트 키(AIza...)'를 따옴표 안에 붙여넣으세요!
+# [수정] 발급받은 '유료 프로젝트 키(AIza...)'를 따옴표 안에 넣으세요!
 # api_key = ""
 # PyCharm 환경변수에서 키 가져오기
 api_key = os.environ.get("GEMINI_API_KEY")

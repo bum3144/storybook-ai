@@ -3,13 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
   <title>{{ title }}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
   <style>
     :root { --border:#e5e7eb; --brand:#2563eb; --danger:#ef4444; }
     body{margin:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#fff; color:#111}
     .wrap{max-width:1200px; margin:0 auto; padding:20px}
 
+    /* --- [웹 뷰어 스타일] --- */
     .header{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #eee}
     .title{font-size:24px; font-weight:700}
     .actions{display:flex; gap:10px}
@@ -18,37 +19,13 @@
     .btn:hover{background:#f9fafb}
     .btn.primary{background:var(--brand); color:#fff; border-color:var(--brand)}
     .btn.danger{color:var(--danger); border-color:var(--danger)}
-    .btn.danger:hover{background:#fef2f2}
-
     .btn-cover { border:1px solid #8b5cf6; color:#7c3aed; background:#f5f3ff; }
     .btn-cover:hover { background:#ede9fe; }
 
-    /* 뷰어 컨테이너 (화면 표시용) */
-    .viewer-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        height: 75vh;
-        min-height: 400px;
-    }
-
-    .viewer {
-        display: flex;
-        height: 100%;
-        aspect-ratio: 2 / 1.414;
-        max-width: 100%;
-        border: 1px solid #eee;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        background: #fff;
-    }
-
+    .viewer-container { position: relative; display: flex; align-items: center; justify-content: center; gap: 20px; height: 75vh; min-height: 400px; }
+    .viewer { display: flex; height: 100%; aspect-ratio: 2 / 1.414; max-width: 100%; border: 1px solid #eee; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: #fff; }
     .viewer-panel { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; }
     .viewer-left { border-right: 1px solid #eee; }
-
     .panel-img { width: 100%; height: 100%; object-fit: cover; }
     .panel-text { padding: 40px; font-size: 18px; line-height: 1.7; white-space: pre-wrap; text-align: center; }
 
@@ -56,60 +33,63 @@
     .cover-title-text { background:rgba(255,255,255,0.85); padding:10px 24px; border-radius:12px; font-size:28px; font-weight:800; margin-bottom:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .cover-author-text { background:rgba(255,255,255,0.85); padding:5px 16px; border-radius:20px; font-size:16px; font-weight:600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 
-    .arrow {
-        width: 50px; height: 50px; border-radius: 50%; border: 1px solid #ddd; background: #fff;
-        font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; user-select: none;
-    }
-    .arrow:hover { background: #f0f0f0; }
-
+    .arrow { width: 50px; height: 50px; border-radius: 50%; border: 1px solid #ddd; background: #fff; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; user-select: none; }
     .thumbs{display:flex; gap:10px; margin-top:20px; overflow-x:auto; padding-bottom:10px; justify-content: center;}
     .thumb{flex:0 0 80px; height: 80px; cursor:pointer; border:2px solid transparent; border-radius:8px; opacity:0.6; transition:0.2s; position:relative; overflow: hidden;}
-    .thumb:hover{opacity:1}
     .thumb.active{border-color:var(--brand); opacity:1}
     .thumb img{width:100%; height:100%; object-fit:cover;}
     .thumb-badge { position:absolute; top:0; left:0; background:#8b5cf6; color:#fff; font-size:10px; padding:2px 4px; border-radius:0 0 4px 0; font-weight:bold; }
 
-    /* 인쇄 스타일 */
-    @page { size: A4 landscape; margin: 0; }
-    @media print {
-      body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      .header, .thumbs, .arrow, .nav-hint, .viewer-container { display: none !important; }
-      .wrap { max-width: 100%; padding: 0; margin: 0; }
-      .print-only-list { display: block !important; }
-
-      .print-spread, .cover-print-container {
-          display: flex; flex-direction: row; width: 100vw; height: 100vh;
-          break-after: page; page-break-after: always;
-          align-items: center; justify-content: center;
-      }
-
-      /* 마지막 페이지 뒤 빈 종이 방지 */
-      .print-only-list > div:last-child {
-          break-after: auto !important;
-          page-break-after: auto !important;
-      }
-
-      .print-half { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden; position: relative; }
-      .print-left-img img { max-width: 100%; max-height: 90%; object-fit: contain; }
-      .print-right-text { padding: 60px; font-size: 22px; line-height: 2.0; white-space: pre-wrap; }
-
-      /* 표지 인쇄 설정 (좌: 뒷표지 / 우: 앞표지) */
-      .print-back-cover {
-        width: 50%; height: 100%;
-        display: flex; align-items: center; justify-content: center;
-        /* 뒷표지 텍스트 제거됨 */
-      }
-      .print-front-cover {
-        width: 50%; height: 100%; position: relative;
-      }
-      .print-cover-img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
-      .print-cover-info { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; padding:60px; z-index:10; }
-
-      .pc-title { font-size:42px; font-weight:900; background:rgba(255,255,255,0.85); padding:15px 30px; border-radius:10px; margin-bottom:20px; text-align:center; }
-      .pc-author { font-size:20px; background:rgba(255,255,255,0.85); padding:8px 20px; border-radius:30px; }
+    /* ------------------------------
+       [PDF 저장용 스타일 - 전자책 모드]
+       ------------------------------ */
+    @page {
+        size: A4 landscape; /* 가로 고정 */
+        margin: 0;
     }
-    .print-only-list { display: none; }
+    @media print {
+      html, body {
+          width: 297mm; height: 210mm;
+          margin: 0; padding: 0;
+          background: #fff;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+      }
+
+      /* 웹 화면 요소 숨김 */
+      .header, .thumbs, .arrow, .nav-hint, .viewer-container, .wrap { display: none !important; }
+
+      /* PDF 전용 리스트 표시 */
+      .pdf-container { display: block !important; }
+
+      /* 페이지 단위 설정 */
+      .pdf-spread {
+          display: flex; flex-direction: row;
+          width: 297mm; height: 209mm; /* 1mm 여유 */
+          page-break-after: always; break-after: page;
+          overflow: hidden;
+      }
+
+      /* 마지막 페이지 넘김 방지 */
+      .pdf-spread:last-child { page-break-after: auto; break-after: auto; }
+
+      /* 반쪽 페이지 (왼쪽/오른쪽) */
+      .pdf-half {
+          width: 50%; height: 100%;
+          display: flex; align-items: center; justify-content: center;
+          position: relative; box-sizing: border-box;
+      }
+
+      .p-img { max-width: 100%; max-height: 100%; object-fit: contain; padding: 10mm; }
+      .p-text { padding: 20mm; font-size: 18pt; line-height: 1.8; white-space: pre-wrap; text-align: center; word-break: keep-all; }
+
+      /* 표지 텍스트 스타일 */
+      .pdf-cover-info { display:flex; flex-direction:column; align-items:center; }
+      .pc-title { font-size: 36pt; font-weight: 900; margin-bottom: 20px; text-align: center; line-height: 1.2; }
+      .pc-author { font-size: 20pt; color: #555; }
+    }
+
+    .pdf-container { display: none; } /* 평소엔 숨김 */
   </style>
 </head>
 <body id="body">
@@ -120,60 +100,59 @@
         <a href="/dashboard" class="btn">대시보드</a>
         <a href="/images" class="btn">← 이미지 생성으로</a>
         <a href="/cover/{{ story_id }}" class="btn btn-cover">🎨 표지 꾸미기</a>
-        <button onclick="handlePrint()" class="btn primary">PDF 저장 / 인쇄</button>
+        <button onclick="window.print()" class="btn primary">PDF 저장 (전자책)</button>
         <button onclick="handleDelete()" class="btn danger">삭제</button>
       </div>
     </div>
 
     <div class="viewer-container">
         <button class="arrow" onclick="moveSlide(-1)">‹</button>
-
         <div class="viewer">
             <div class="viewer-panel viewer-left" id="leftPanel"></div>
             <div class="viewer-panel viewer-right" id="rightPanel"></div>
         </div>
-
         <button class="arrow" onclick="moveSlide(1)">›</button>
     </div>
 
     <div class="thumbs" id="thumbsList"></div>
   </div>
 
-  <div class="print-only-list">
-    {% if cover %}
-    <div class="cover-print-container">
-       <div class="print-back-cover" style="background-color: {{ cover.back_color }}">
-           </div>
+  <div class="pdf-container">
 
-       <div class="print-front-cover" style="background-color: {{ cover.back_color }}">
-          {% if cover.front_image_url %}
-          <img src="{{ cover.front_image_url }}" class="print-cover-img">
-          {% endif %}
-          <div class="print-cover-info" style="justify-content: {{ 'flex-start' if cover.title_position=='top' else ('flex-end' if cover.title_position=='bottom' else 'center') }}">
-             <div class="pc-title">{{ title }}</div>
-             {% if cover.author_name %}
-             <div class="pc-author">{{ cover.author_name }} 지음</div>
-             {% endif %}
-          </div>
+    {% if cover %}
+    <div class="pdf-spread">
+       <div class="pdf-half" style="background-color: {{ cover.back_color }}">
+           {% if cover.front_image_url %}
+           <img src="{{ cover.front_image_url }}" class="p-img" style="padding:0; width:100%; height:100%; object-fit:cover;">
+           {% endif %}
        </div>
-    </div>
-    {% else %}
-    <div class="print-spread" style="flex-direction:column; text-align:center;">
-        <h1 style="font-size:48px; margin-bottom:20px;">{{ title }}</h1>
-        <p style="font-size:20px; color:#666;">AI Storybook</p>
+       <div class="pdf-half" style="background-color: {{ cover.back_color }}; flex-direction:column;">
+           <div class="pc-title">{{ title }}</div>
+           <div class="pc-author">{{ cover.author_name }} 지음</div>
+       </div>
     </div>
     {% endif %}
 
     {% for p in pages %}
-    <div class="print-spread">
-      <div class="print-half print-left-img">
-          <img src="{{ p.url }}" alt="Scene">
+    <div class="pdf-spread">
+      <div class="pdf-half">
+          <img src="{{ p.url }}" class="p-img" alt="Scene">
       </div>
-      <div class="print-half print-right-text">
-          <p>{{ p.text }}</p>
+      <div class="pdf-half">
+          <div class="p-text">{{ p.text }}</div>
       </div>
     </div>
     {% endfor %}
+
+    {% if cover %}
+    <div class="pdf-spread">
+       <div class="pdf-half" style="background-color: {{ cover.back_color }}"></div>
+       <div class="pdf-half" style="background-color: {{ cover.back_color }}">
+           <div style="color:rgba(0,0,0,0.3); font-weight:bold;">The End</div>
+       </div>
+    </div>
+    {% endif %}
+
   </div>
 
   <script>
@@ -182,6 +161,7 @@
     const coverData = {{ cover|tojson if cover else 'null' }};
     const storyTitle = "{{ title }}";
 
+    // --- 웹 뷰어 로직 (기존 유지) ---
     let slides = [];
     if (coverData) {
       slides.push({
@@ -229,7 +209,6 @@
       rightPanel.innerHTML = '';
 
       if (s.type === 'cover') {
-        // [웹 화면] 왼쪽: 앞표지 / 오른쪽: 뒷표지(텍스트 포함)
         const img = document.createElement('img');
         img.className = 'panel-img';
         img.src = s.frontUrl || '';
@@ -250,7 +229,6 @@
         backText.style.color = "rgba(0,0,0,0.3)";
         backText.style.fontWeight = "bold";
         rightPanel.appendChild(backText);
-
       } else {
         const img = document.createElement('img');
         img.className = 'panel-img';
@@ -264,7 +242,6 @@
         rightPanel.appendChild(txt);
         rightPanel.style.background = '#fff';
       }
-
       Array.from(thumbsList.children).forEach((el, i) => {
         el.classList.toggle('active', i === idx);
       });
@@ -276,15 +253,13 @@
         if(e.key === 'ArrowRight') moveSlide(1);
     });
 
-    function handlePrint() { window.print(); }
-
     async function handleDelete() {
       if(!storyId) return;
       if(confirm('정말 삭제하시겠습니까?')) {
         try {
           const res = await fetch('/api/story/' + storyId, { method: 'DELETE' });
           if((await res.json()).ok) location.href = '/dashboard';
-        } catch(e){ alert('오류가 발생했습니다.'); }
+        } catch(e){ alert('오류'); }
       }
     }
 

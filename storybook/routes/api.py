@@ -8,6 +8,7 @@ import hashlib
 import os  # <--- 추가됨
 
 from storybook.providers.gemini_provider import GeminiProvider
+from storybook.providers.image_provider import ImageProvider
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -321,42 +322,84 @@ def _safe_url(primary_url: str, idx: int, tries: int = 2) -> str:
     return PLACEHOLDER_TMPL.format(idx=idx)
 
 
+# ------------------------------
+# B) 이미지 생성 API (Real AI 연결)
+# ------------------------------
 @api_bp.post("/images/generate")
 def images_generate():
     payload = request.get_json(silent=True) or {}
     pages_in = payload.get("pages") or []
-    style = (payload.get("style") or "").strip()
+    style = (payload.get("style") or "동화 일러스트").strip()
+
+    img_provider = ImageProvider()
+    gemini_provider = GeminiProvider()
 
     out = []
-    preview_pages = []  # <-- 미리보기 저장용
+    preview_pages_update = []
+
+    print(f"🎨 이미지 생성 요청: {len(pages_in)}장 / 스타일: {style}")
+
+    # ---------------------------------------------------------
+    # [최적화] 1. 한글 텍스트만 쏙 뽑아서 한 번에 번역 요청 (1 API Call)
+    # ---------------------------------------------------------
+    korean_texts = []
+    # 나중에 매칭하기 위해 유효한 인덱스만 추림
+    valid_pages = []
 
     for p in pages_in:
         try:
             idx = int(p.get("index"))
-        except Exception:
+            txt = (p.get("text") or "").strip()
+            korean_texts.append(txt)
+            valid_pages.append({"index": idx, "original_text": txt})
+        except:
             continue
-        text = (p.get("text") or "").strip()
 
-        seed_src = f"{style}|{text}|{idx}"
-        seed = hashlib.sha1(seed_src.encode("utf-8")).hexdigest()[:12]
-        primary = PICSUM_TMPL.format(seed=seed)
-        url = _safe_url(primary, idx, tries=2)
+    # 여기서 한 번에 번역! (속도 UP, 할당량 절약)
+    english_prompts = gemini_provider.translate_prompts_bulk(korean_texts)
+
+    # ---------------------------------------------------------
+    # 2. 번역된 프롬프트로 이미지 생성
+    # ---------------------------------------------------------
+    for i, page_data in enumerate(valid_pages):
+        idx = page_data["index"]
+        k_text = page_data["original_text"]
+
+        # 번역된 거 가져오기 (혹시 에러나서 리스트 길이가 안 맞으면 원본 사용)
+        if i < len(english_prompts):
+            visual_prompt = english_prompts[i]
+        else:
+            visual_prompt = "storybook scene"
+
+        full_prompt = f"({style} style), {visual_prompt}"
+
+        # 이미지 URL 생성 (Pollinations는 제한 없음)
+        url = img_provider.build_image_url(full_prompt)
 
         out.append({"index": idx, "url": url})
-        preview_pages.append({"index": idx, "text": text, "url": url})
+        preview_pages_update.append({"index": idx, "text": k_text, "url": url})
 
-        time.sleep(0.02)
+        # 서버 부하 방지 (번역은 끝났으니 이미지 생성 간격은 짧게)
+        time.sleep(0.2)
 
     out.sort(key=lambda x: x["index"])
-    preview_pages.sort(key=lambda x: x["index"])
 
-    # 에디터에서 저장한 초안에서 제목 가져오기
-    title = ""
-    draft = session.get("draft") or {}
-    if isinstance(draft, dict):
-        title = draft.get("title", "")
+    # 세션 업데이트 로직 (기존과 동일)
+    current_preview = session.get("preview") or {}
+    if not current_preview:
+        cache = session.get("editor_cache") or {}
+        current_preview = {"title": cache.get("title", ""), "pages": []}
 
-    # 세션에 미리보기 저장
-    session["preview"] = {"title": title, "pages": preview_pages}
+    existing_map = {p["index"]: p for p in current_preview.get("pages", [])}
+    for new_p in preview_pages_update:
+        existing_map[new_p["index"]] = new_p
+
+    updated_pages = sorted(existing_map.values(), key=lambda x: x["index"])
+
+    session["preview"] = {
+        "title": current_preview.get("title", ""),
+        "pages": updated_pages
+    }
+    session.modified = True
 
     return jsonify({"images": out}), 200

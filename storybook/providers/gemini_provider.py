@@ -18,13 +18,18 @@ class GeminiProvider:
 
     def __init__(self):
         self.api_key = os.environ.get("GEMINI_API_KEY")
+
         self._configured = False
         if self.api_key:
             genai.configure(api_key=self.api_key)
             self._configured = True
 
-        # [수정] 목록에서 확인된 최신 Flash 모델 사용!
-        self.model_name = "gemini-2.5-flash"
+            # [최종 확정]
+            # 목록에 확실히 존재하는 '2.0-flash'를 사용합니다.
+            # 유료 계정이므로 Limit: 0 에러 없이 작동할 겁니다.
+            self.model_name = "gemini-2.0-flash"
+
+            print(f"👀 [Storybook] 모델명: {self.model_name} (유료모드: 무제한/저비용)")
 
     def is_available(self) -> bool:
         """API 키가 설정되어 있고 사용 가능한지 확인"""
@@ -65,24 +70,31 @@ class GeminiProvider:
             results = self._parse_response(response.text, len(pages))
 
             # ---------------------------------------------------------------
-            # [핵심 수정] 인덱스 강제 보정 (AI의 착각 방지)
-            # 요청한 페이지가 1개뿐인데 결과도 1개가 왔다면,
-            # AI가 번호를 헷갈렸을 수 있으므로 요청했던 원본 인덱스로 덮어씌웁니다.
+            # [핵심 수정 1] 단일 페이지 재생성 시 인덱스 고정
             # ---------------------------------------------------------------
             if len(pages) == 1 and len(results) == 1:
                 req_idx = int(pages[0].get("index", 0))
-                res_idx = int(results[0].get("index", 0))
+                results[0]["index"] = req_idx
 
-                if req_idx != res_idx:
-                    logging.info(f"AI Index Mismatch Fix: AI({res_idx}) -> Req({req_idx})")
-                    results[0]["index"] = req_idx
+            # ---------------------------------------------------------------
+            # [핵심 수정 2] 전체 플롯 생성 시 인덱스 순차 정렬 (0, 1, 2...)
+            # AI가 {"index": 1} 부터 시작해서 보내더라도, 무조건 0부터 채워넣도록 강제합니다.
+            # ---------------------------------------------------------------
+            elif len(pages) > 1 and results:
+                # 일단 AI가 보낸 인덱스 순서대로 정렬은 하되...
+                results.sort(key=lambda x: x.get("index", 0))
+
+                # 강제로 0, 1, 2... 순서표를 다시 붙입니다.
+                for i, res in enumerate(results):
+                    # 요청한 페이지 수보다 넘치지 않게 방어
+                    if i < len(pages):
+                        res["index"] = int(pages[i].get("index", i))
 
             return results
 
         except Exception as e:
             logging.error(f"Gemini generation failed: {e}")
             raise e
-
     def _build_prompt(self, meta: Dict[str, str], pages: List[Dict[str, Any]]) -> str:
         """LLM에게 보낼 프롬프트를 작성합니다. (페이지별 재생성 고려)"""
         title = meta.get("title", "제목 없음")
@@ -156,6 +168,89 @@ class GeminiProvider:
   {{ "index": {target_indices[0]}, "text": "작성된 내용..." }}
 ]
 """
+
+    # Gemini에게 "한글 문장 -> 영어 그림 묘사 키워드"로 변환해달라는 새로운 기능을 추가
+    def translate_prompt_for_image(self, korean_text: str) -> str:
+        """
+        한글 동화 텍스트를 이미지 생성용 영어 프롬프트로 변환합니다.
+        실패 시 최대 2회 재시도합니다.
+        """
+        if not self.is_available() or not korean_text:
+            return korean_text
+
+        model = genai.GenerativeModel(self.model_name)
+
+        system_instruction = (
+            "You are a prompt engineer for Stable Diffusion. "
+            "Convert the given Korean story sentence into a detailed English visual prompt. "
+            "Focus on visual elements (subjects, action, setting, lighting). "
+            "Use comma-separated keywords. Do not explain, just output the prompt."
+        )
+
+        # 최대 2번 재시도 (총 3회 시도)
+        max_retries = 2
+        import time
+
+        for attempt in range(max_retries + 1):
+            try:
+                prompt = f"{system_instruction}\nInput: {korean_text}"
+                response = model.generate_content(prompt)
+                english_prompt = response.text.strip()
+                print(f"[Gemini] Prompt Translated: {english_prompt[:30]}...")
+                return english_prompt
+            except Exception as e:
+                print(f"[Gemini] Translation Error (Attempt {attempt + 1}): {e}")
+                if attempt < max_retries:
+                    time.sleep(1.5)  # 실패 시 1.5초 대기 후 재시도
+                else:
+                    # 최종 실패 시 기본 영어 키워드 반환 (한글을 보내면 100% 실패하므로)
+                    return "storybook illustration, fantasy style, cute characters"
+
+    def translate_prompts_bulk(self, korean_texts: List[str]) -> List[str]:
+        """
+        [최적화] 여러 문장을 한 번의 API 호출로 모두 영어 프롬프트로 변환합니다.
+        입력: ["문장1", "문장2", ...]
+        출력: ["prompt1", "prompt2", ...]
+        """
+        if not self.is_available() or not korean_texts:
+            return korean_texts
+
+        # 무조건 self.model_name을 써야 합니다!
+        model = genai.GenerativeModel(self.model_name)
+
+        # 번역할 문장들을 번호 매겨서 나열
+        input_text_block = ""
+        for i, txt in enumerate(korean_texts):
+            input_text_block += f"{i}. {txt}\n"
+
+        system_instruction = (
+            "You are a prompt engineer. Convert the given Korean story sentences into detailed English visual prompts.\n"
+            "Return ONLY a JSON array of strings, strictly matching the order of input.\n"
+            "Example input:\n0. 안녕\n1. 바다\n"
+            "Example output:\n[\"hello, greeting\", \"ocean, blue water\"]\n"
+        )
+
+        prompt = f"{system_instruction}\n[Input Sentences]\n{input_text_block}"
+
+        try:
+            # 한 번에 요청!
+            response = model.generate_content(
+                prompt,
+                generation_config={"response_mime_type": "application/json"}
+            )
+            parsed = json.loads(response.text)
+
+            # 개수 검증
+            if isinstance(parsed, list) and len(parsed) == len(korean_texts):
+                print(f"🔤 Bulk Translation Success: {len(parsed)} items")
+                return parsed
+            else:
+                print("⚠️ Bulk Translation Count Mismatch. Fallback to raw text.")
+                return korean_texts  # 실패 시 원본 반환
+
+        except Exception as e:
+            print(f"❌ Bulk Translation Failed: {e}")
+            return korean_texts
 
     def _parse_response(self, text: str, expected_count: int) -> List[Dict[str, str]]:
         """JSON 문자열을 파싱하여 리스트로 변환합니다."""

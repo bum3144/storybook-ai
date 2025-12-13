@@ -122,15 +122,34 @@
       el.pagesWrap.innerHTML = '';
 
       for(let i=0; i<count; i++) {
+        const pageContent = contents[i];
+        let textValue = '';
+        let keywordsValue = '';
+
+        if (typeof pageContent === 'object' && pageContent !== null) {
+            // 객체인 경우 (임시 저장 로드 시)
+            textValue = pageContent.text || '';
+            if (pageContent.keywords) {
+                keywordsValue = pageContent.keywords.join(', ');
+            }
+        } else if (typeof pageContent === 'string') {
+            // 문자열인 경우 (Array(3).fill('') 초기화 시)
+            textValue = pageContent;
+        }
+
+        // [핵심 수정 부분]: textValue가 여전히 객체라면 JSON 문자열로 변환하여 에러 방지
+        if (typeof textValue === 'object' && textValue !== null) {
+            textValue = JSON.stringify(textValue, null, 2);
+        }
+
         const div = document.createElement('div');
         div.className = 'page-box';
         div.innerHTML = `
           <div style="font-weight:bold; margin-bottom:8px">페이지 ${i+1}</div>
-          <input type="text" class="kw-input" placeholder="키워드 (예: 숲, 아침)" style="margin-bottom:8px">
-          <textarea class="txt-area" placeholder="내용을 입력하세요">${contents[i].text || contents[i] || ''}</textarea>
+          <input type="text" class="kw-input" placeholder="키워드 (예: 숲, 아침)" style="margin-bottom:8px" value="${keywordsValue}">
+          <textarea class="txt-area" placeholder="내용을 입력하세요">${textValue}</textarea>
           <button class="btn" style="font-size:12px; margin-top:5px" onclick="retryPage(${i})">이 페이지만 AI로 다시 쓰기</button>
         `;
-        if(contents[i].keywords) div.querySelector('.kw-input').value = contents[i].keywords.join(', ');
         el.pagesWrap.appendChild(div);
       }
     }
@@ -161,8 +180,11 @@
     el.pageCount.addEventListener('change', () => {
       const cnt = parseInt(el.pageCount.value);
       const current = getPagesData();
+      // 페이지 수를 늘릴 때는 빈 문자열로 채우기
       if(cnt > current.length) while(current.length < cnt) current.push('');
+      // 페이지 수를 줄일 때는 자르기
       else current.length = cnt;
+
       renderPages(current);
     });
 

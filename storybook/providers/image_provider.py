@@ -19,36 +19,35 @@ class ImageProvider:
         프롬프트를 받아 이미지 URL을 생성합니다.
         seed를 붙여서 매번 새로운 이미지가 생성되도록 유도합니다.
         """
-        # 1. 스타일 강조 (앞단에 배치)
-        # 동화책 느낌을 살리기 위해 영어 키워드들을 앞에 붙여줍니다.
-        # (children's book illustration, cute, soft colors 등)
+        # 1. 화질 및 스타일 강조 (프롬프트 앞단에 배치)
+        # 고품질 이미지를 생성하기 위해 디테일 관련 키워드를 강제로 추가합니다.
+        quality_booster = "best quality, masterpiece, highly detailed, 8k resolution, vibrant colors, sharp focus, artstation trend"
 
-        # 만약 프롬프트에 이미 스타일(괄호)이 포함되어 있다면 그대로 두고,
-        # 아니라면 기본 스타일을 붙입니다.
+        # api.py에서 이미 스타일이 포함된 경우와 아닌 경우를 구분하여 처리
         if "style" not in prompt:
-            enriched_prompt = f"children's storybook illustration, soft colors, masterpiece, {prompt}"
+            # 스타일이 없는 경우 기본 동화책 느낌 추가
+            enriched_prompt = f"children's storybook illustration, soft colors, {quality_booster}, {prompt}"
         else:
-            # api.py에서 넘겨준 "(style), text" 형태를 조금 더 보강
-            enriched_prompt = f"best quality, {prompt}"
+            # api.py에서 "(style), text" 형태로 넘어온 경우
+            enriched_prompt = f"{quality_booster}, {prompt}"
 
-        # 2. 랜덤 시드 추가 (중복 방지 핵심!)
+        # 2. 랜덤 시드 추가 (중복 방지 핵심)
         # 시드 값이 없으면 랜덤하게 생성
         if seed is None:
             seed = random.randint(0, 999999)
 
-        # URL 뒤에 ?nospam=1&seed={seed} 파라미터를 붙여서 캐싱을 방지합니다.
-        # quote()를 사용해 한글/특수문자를 URL 인코딩합니다.
+        # URL 인코딩 (한글 및 특수문자 처리)
         encoded_prompt = quote(enriched_prompt)
-        # final_url = f"{ImageProvider.BASE}{encoded_prompt}?nospam=1&seed={seed}&width=1024&height=1024"
 
-        # 기존: width=1024&height=1024
-        # 수정: width=768&height=768 로 변경하여 속도 향상
-        final_url = f"{ImageProvider.BASE}{encoded_prompt}?nospam=1&seed={seed}&width=768&height=768"
+        # 3. 해상도 및 모델 설정
+        # 기존 768에서 1024로 상향 조정하여 화질 개선
+        # model=flux 파라미터를 추가하여 프롬프트 반영도 및 디테일 향상
+        final_url = f"{ImageProvider.BASE}{encoded_prompt}?nospam=1&seed={seed}&width=1024&height=1024&model=flux"
+
         return final_url
 
     def images_for_keywords(self, keywords: List[str], limit: int) -> List[str]:
-        # (이 메서드는 현재 api.py에서 직접 build_image_url을 호출하므로 사용되지 않지만,
-        #  호환성을 위해 남겨둡니다.)
+        # (호환성을 위한 레거시 메서드)
         limit = max(1, min(int(limit or 1), 5))
         kws = [k.strip() for k in (keywords or []) if k and k.strip()]
         if not kws:

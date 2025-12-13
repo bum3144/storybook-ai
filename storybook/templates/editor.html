@@ -717,6 +717,22 @@
 
       /* -------------------- AI 추천 (백엔드 API 호출) -------------------- */
       el.btnAiPlot.addEventListener('click', async function(){
+        // [UX 개선] 로딩 상태 표시 함수
+        function setPlotLoading(isLoading) {
+          if (isLoading) {
+            el.btnAiPlot.disabled = true;
+            el.btnAiPlot.dataset.originalText = el.btnAiPlot.textContent;
+            el.btnAiPlot.textContent = "✨ 작가님이 스토리를 구상 중입니다..."; // 로딩 멘트
+            el.btnAiPlot.style.opacity = "0.7";
+            el.btnAiPlot.style.cursor = "wait";
+          } else {
+            el.btnAiPlot.disabled = false;
+            el.btnAiPlot.textContent = el.btnAiPlot.dataset.originalText || "AI로 추천 플롯 생성";
+            el.btnAiPlot.style.opacity = "1";
+            el.btnAiPlot.style.cursor = "pointer";
+          }
+        }
+
         // 1) 메타 정보 수집
         var meta = {
           title: el.title.value || '',
@@ -729,7 +745,6 @@
         // 2) 페이지 정보 수집
         var pages = collectPagesForApi();
         if (!pages.length){
-          // 페이지가 하나도 없으면 기본 개수만큼 빈 페이지 생성
           var cnt = getPageCount();
           var empty = [];
           for (var i = 0; i < cnt; i++){
@@ -738,9 +753,8 @@
           pages = empty;
         }
 
-        // 키워드 기반 페이지 수 자동 조정 (기존 옵션 유지)
+        // 키워드 기반 페이지 수 자동 조정
         if (el.autoAdjust && el.autoAdjust.checked){
-          // 첫 페이지 키워드 input 기준으로 키워드 개수 계산
           var kwSampleInput = document.querySelector('.page-keywords-input');
           if (kwSampleInput){
             var sampleKw = (kwSampleInput.value || '').split(',').map(function(k){ return k.trim(); }).filter(Boolean);
@@ -750,6 +764,9 @@
         }
 
         try {
+          // ★ 로딩 시작!
+          setPlotLoading(true);
+
           var res = await fetch('/api/plot/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -766,12 +783,15 @@
 
           var data = await res.json();
           applyPlotResult(data.pages || []);
+
         } catch (e){
           console.error(e);
           toast('AI 플롯 생성 요청에 실패했습니다.');
+        } finally {
+          // ★ 로딩 끝! (성공하든 실패하든 무조건 실행)
+          setPlotLoading(false);
         }
       });
-
 
 
       /* -------------------- 이미지 페이지로 이동(세션 캐시) -------------------- */

@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 from flask import Blueprint, request, jsonify, session
 from typing import Any, Dict, List
 
 import requests
-import random  # (현재 직접 사용은 안 하지만 남겨둬도 무방)
+import random
 import time
 import hashlib
+import os  # <--- 추가됨
 
 from storybook.providers.gemini_provider import GeminiProvider
 
@@ -64,7 +64,7 @@ def editor_cache():
 # ------------------------------
 # A) AI 스토리 플롯 생성 (목업 / LLM 교체용)
 # ------------------------------
-def _generate_story_pages(meta: Dict[str, str], pages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+def _generate_story_pages_mock(meta: Dict[str, str], pages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
 
     def pick_main(value: str) -> str:
         """
@@ -215,6 +215,31 @@ def _generate_story_pages(meta: Dict[str, str], pages: List[Dict[str, Any]]) -> 
         result.append(build_page_story(i, page))
 
     return result
+
+
+# ------------------------------
+# 새로운 스위치 로직 (Mock vs Gemini)
+# ------------------------------
+def _generate_story_pages(meta: Dict[str, str], pages: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """
+    환경변수 설정에 따라 Gemini를 쓸지, Mock을 쓸지 결정하는 스위치 함수입니다.
+    """
+    use_gemini = os.environ.get("USE_GEMINI_TEXT") == "1"
+
+    # GeminiProvider가 사용 가능한지(키가 있는지) 확인
+    provider = GeminiProvider()
+
+    if use_gemini and provider.is_available():
+        try:
+            print("✨ Gemini API를 사용하여 스토리를 생성합니다...")
+            return provider.generate_story(meta, pages)
+        except Exception as e:
+            print(f"⚠️ Gemini 생성 실패 (Mock으로 전환): {e}")
+            # 실패하면 아래 Mock으로 넘어갑니다.
+
+    # 기본값 또는 실패 시 Mock 사용
+    print("🤖 Mock 엔진을 사용하여 스토리를 생성합니다.")
+    return _generate_story_pages_mock(meta, pages)
 
 @api_bp.post("/plot/generate")
 def plot_generate():

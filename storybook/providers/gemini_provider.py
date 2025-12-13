@@ -1,135 +1,150 @@
 # storybook/providers/gemini_provider.py
 from __future__ import annotations
-from typing import List, Optional, Dict, Any
+import os
+import json
+import logging
+from typing import List, Dict, Any, Optional
+
+# google-generativeai 라이브러리가 필요합니다.
+# pip install google-generativeai
+import google.generativeai as genai
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
+
 
 class GeminiProvider:
     """
-    추후 실제 Google Gemini API로 교체할 수 있도록 인터페이스만 유지.
-    지금은 목업(로컬 생성)으로 동작.
+    Google Gemini API를 사용하여 스토리 플롯을 생성하는 공급자입니다.
     """
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key
 
-    def suggest_story(
+    def __init__(self):
+        self.api_key = os.environ.get("GEMINI_API_KEY")
+        self._configured = False
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+            self._configured = True
+
+        # [수정] 목록에서 확인된 최신 Flash 모델 사용!
+        self.model_name = "gemini-2.5-flash"
+
+    def is_available(self) -> bool:
+        """API 키가 설정되어 있고 사용 가능한지 확인"""
+        return bool(self._configured)
+
+    def generate_story(
             self,
             meta: Dict[str, str],
             pages: List[Dict[str, Any]],
     ) -> List[Dict[str, str]]:
         """
-        스토리 전체 메타 + 페이지별 정보 기반으로
-        페이지별 한 줄 요약을 생성하는 LLM 엔트리 포인트.
-
-        지금은 규칙 기반 목업이지만,
-        실제 LLM 연동 시 이 함수 내부만 교체하면 됨.
+        Gemini에게 프롬프트를 보내고, JSON 응답을 파싱하여 반환합니다.
+        실패 시(키 없음, 파싱 에러 등) 예외를 발생시키거나 빈 리스트를 반환할 수 있습니다.
         """
-        title = (meta.get("title") or "").strip()
-        hero = (meta.get("hero") or "").strip() or "주인공"
-        genre = (meta.get("genre") or "").strip()
-        world = (meta.get("world") or "").strip()
-        theme = (meta.get("theme") or "").strip()
+        if not self.is_available():
+            raise ValueError("Gemini API Key가 설정되지 않았습니다.")
 
-        # 장면 단계 텍스트 (그대로 활용)
-        stage_texts = [
-            "이야기의 문을 여는 시작 장면입니다.",
-            "모험이 본격적으로 펼쳐지는 장면입니다.",
-            "뜻밖의 사건이 일어나 흐름이 크게 바뀌는 장면입니다.",
-            "가장 긴장되는 클라이맥스 장면입니다.",
-            "조용히 정리되고 따뜻하게 마무리되는 장면입니다.",
-        ]
+        # 1. 프롬프트 구성
+        prompt = self._build_prompt(meta, pages)
 
-        total = max(1, len(pages))
-        results: List[Dict[str, str]] = []
+        # 2. 모델 설정 및 호출
+        model = genai.GenerativeModel(self.model_name)
 
-        def build_kw_parts(kws: List[str]) -> Tuple[str, str]:
-            """
-            첫 번째 키워드는 중심 키워드,
-            나머지는 부가 키워드 문구로 묶는다.
-            """
-            if not kws:
-                return "", ""
-            main = kws[0]
-            if len(kws) == 1:
-                return main, ""
-            rest = kws[1:]
-            if len(rest) == 1:
-                rest_phrase = rest[0]
-            else:
-                # A, B, C 그리고 D 형태
-                rest_phrase = ", ".join(rest[:-1]) + " 그리고 " + rest[-1]
-            return main, rest_phrase
+        # 안전 설정 (동화책이므로 보수적으로 설정하되, 너무 막히지 않게 조절)
+        safety_settings = {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        }
 
-        for i, page in enumerate(pages):
-            idx = int(page.get("index", i))
-            kws = [str(k).strip() for k in page.get("keywords") or [] if str(k).strip()]
+        try:
+            # JSON 모드로 응답 요청 (프롬프트에서 JSON 형식을 강제하지만, response_mime_type을 쓰면 더 확실합니다)
+            response = model.generate_content(
+                prompt,
+                safety_settings=safety_settings,
+                generation_config={"response_mime_type": "application/json"}
+            )
 
-            main_kw, rest_kw = build_kw_parts(kws)
+            # 3. 응답 파싱
+            return self._parse_response(response.text, len(pages))
 
-            # 장면 단계 인덱스
-            if total == 1:
-                stage_idx = 0
-            else:
-                stage_idx = round((i / (total - 1)) * (len(stage_texts) - 1))
-            stage_idx = min(max(stage_idx, 0), len(stage_texts) - 1)
+        except Exception as e:
+            logging.error(f"Gemini generation failed: {e}")
+            raise e
 
-            world_part = f"{world}를 배경으로 " if world else ""
+    def _build_prompt(self, meta: Dict[str, str], pages: List[Dict[str, Any]]) -> str:
+        """LLM에게 보낼 프롬프트를 작성합니다."""
+        title = meta.get("title", "제목 없음")
+        genre = meta.get("genre", "동화")
+        world = meta.get("world", "상상 속 세상")
+        theme = meta.get("theme", "모험")
+        hero = meta.get("hero", "주인공")
 
-            # --- 문장 조합 ---
-            if i == 0:
-                # 첫 장면: 이야기 시작
-                if main_kw:
-                    if rest_kw:
-                        first = (
-                            f"{world_part}{hero}는 {main_kw} 속에서 하루하루를 보내며, "
-                            f"{rest_kw}에 대한 생각으로 가슴이 두근거립니다."
-                        )
-                    else:
-                        first = (
-                            f"{world_part}{hero}는 {main_kw}을(를) 바라보며 "
-                            f"특별한 모험이 시작될 것 같은 예감을 받습니다."
-                        )
-                else:
-                    first = (
-                        f"{world_part}{hero}는 아직 정확히 알 수 없는 무언가를 향해 "
-                        f"마음이 끌리는 것을 느낍니다."
-                    )
-            else:
-                # 이후 장면들: 앞 내용과 자연스럽게 이어지는 느낌만,
-                # '앞선 장면을 이어' 같은 템플릿 문구는 제거
-                if main_kw:
-                    if rest_kw:
-                        first = (
-                            f"{world_part}{hero}는 {main_kw}을(를) 따라가다 보니, "
-                            f"{rest_kw}와(과) 얽힌 새로운 장면을 마주하게 됩니다."
-                        )
-                    else:
-                        first = (
-                            f"{world_part}{hero}는 {main_kw}과(와) 함께 "
-                            f"조금 더 깊숙한 모험 속으로 들어갑니다."
-                        )
-                else:
-                    first = (
-                        f"{world_part}{hero}의 모험은 점점 더 깊어지고 있습니다."
-                    )
+        # 페이지별 키워드 정리
+        pages_info = []
+        for p in pages:
+            idx = p.get("index", 0) + 1
+            kws = p.get("keywords") or []
+            kw_str = ", ".join(kws) if kws else "자유 주제"
+            pages_info.append(f"- 페이지 {idx}: {kw_str}")
 
-            # 단계 요약 문구 추가
-            second = stage_texts[stage_idx]
-            text = first + " " + second
+        pages_text = "\n".join(pages_info)
 
-            # 주제(테마) 공통으로 덧붙이기
-            if theme:
-                text += f" 이 장면 역시 '{theme}'라는 주제를 담고 있습니다."
+        return f"""
+역할: 당신은 아이들을 위한 창의적이고 따뜻한 동화 작가입니다.
+임무: 아래 제공된 메타 정보와 페이지별 키워드를 바탕으로 동화의 각 페이지 내용을 작성해주세요.
 
-            results.append({"index": idx, "text": text})
+[동화 정보]
+- 제목: {title}
+- 장르: {genre}
+- 배경: {world}
+- 주제: {theme}
+- 주인공: {hero}
 
-        return results
+[페이지 구성 요청]
+총 {len(pages)}페이지 분량입니다. 각 페이지에 해당하는 내용을 한두 문장으로 서술적으로 작성해주세요.
+{pages_text}
 
-        # 실제 Gemini 연동 예시 (의존성 없도록 주석 처리):
-        # if self.api_key:
-        #     import google.genai as genai
-        #     client = genai.Client(api_key=self.api_key)
-        #     prompt = self._build_prompt(meta, pages)
-        #     resp = client.models.generate_content(
-        #         model="gemini-1.5-flash",
-        #         contents=prompt,
-        #     )
-        #     # resp.text를 페이지별로 파싱하여 results 형태로 변환 후 반환
+[작성 규칙]
+1. 독자는 5~8세 어린이입니다. 이해하기 쉽고 상상력을 자극하는 표현을 써주세요.
+2. 문체는 '해요체'(~해요, ~했습니다)를 사용해서 부드럽게 작성해주세요.
+3. 각 페이지 내용은 자연스럽게 이어져야 하며, 기승전결(시작-전개-위기/절정-결말)이 느껴지도록 구성해주세요.
+4. 반드시 아래 JSON 형식으로만 응답해주세요. 다른 멘트는 추가하지 마세요.
+
+[응답 예시 포맷]
+[
+  {{ "index": 0, "text": "첫 번째 페이지 내용..." }},
+  {{ "index": 1, "text": "두 번째 페이지 내용..." }}
+]
+"""
+
+    def _parse_response(self, text: str, expected_count: int) -> List[Dict[str, str]]:
+        """JSON 문자열을 파싱하여 리스트로 변환합니다."""
+        try:
+            # 혹시 모를 마크다운 코드 블록 제거
+            clean_text = text.strip()
+            if clean_text.startswith("```json"):
+                clean_text = clean_text[7:]
+            if clean_text.endswith("```"):
+                clean_text = clean_text[:-3]
+
+            data = json.loads(clean_text)
+
+            if not isinstance(data, list):
+                # 리스트가 아니면 단일 객체일 수 있으니 리스트로 감쌈
+                data = [data] if data else []
+
+            # 인덱스 정렬 및 키 정리
+            results = []
+            for item in data:
+                idx = item.get("index")
+                txt = item.get("text", "")
+                if idx is not None:
+                    results.append({"index": int(idx), "text": str(txt)})
+
+            # 인덱스 순 정렬
+            results.sort(key=lambda x: x["index"])
+            return results
+
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON parsing failed: {text}")
+            raise ValueError("AI 응답을 해석할 수 없습니다.") from e

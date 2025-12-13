@@ -30,6 +30,55 @@ def delete_story(story_id: int):
     conn.commit()
     conn.close()
 
+
+# [추가] 표지 정보 저장/업데이트
+def save_cover(story_id: int, image_url: str, title: str, author: str, position: str, color: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    # 기존 표지 있는지 확인
+    cur.execute("SELECT id FROM covers WHERE story_id = ?", (story_id,))
+    row = cur.fetchone()
+
+    if row:
+        # 업데이트
+        cur.execute('''
+                    UPDATE covers
+                    SET front_image_url=?,
+                        title_position=?,
+                        author_name=?,
+                        back_color=?
+                    WHERE story_id = ?
+                    ''', (image_url, position, author, color, story_id))
+    else:
+        # 신규 생성
+        cur.execute('''
+                    INSERT INTO covers (story_id, front_image_url, title_position, author_name, back_color)
+                    VALUES (?, ?, ?, ?, ?)
+                    ''', (story_id, image_url, position, author, color))
+
+    conn.commit()
+    conn.close()
+
+
+# [추가] 표지 정보 조회
+def get_cover(story_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM covers WHERE story_id = ?", (story_id,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+
+# [추가] 스토리 제목 업데이트 함수
+def update_story_title(story_id: int, new_title: str):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE stories SET title = ? WHERE id = ?", (new_title, story_id))
+    conn.commit()
+    conn.close()
+
 def init_db():
     """데이터베이스 테이블 초기화"""
     conn = get_connection()

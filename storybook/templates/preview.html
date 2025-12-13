@@ -9,7 +9,6 @@
     body{margin:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#fff; color:#111}
     .wrap{max-width:1200px; margin:0 auto; padding:20px}
 
-    /* 상단 헤더 */
     .header{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid #eee}
     .title{font-size:24px; font-weight:700}
     .actions{display:flex; gap:10px}
@@ -20,90 +19,95 @@
     .btn.danger{color:var(--danger); border-color:var(--danger)}
     .btn.danger:hover{background:#fef2f2}
 
-    /* 뷰어 영역 (화살표 포함) */
-    .viewer-container { position: relative; display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 500px; }
-    .viewer { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; width: 100%; }
+    .btn-cover { border:1px solid #8b5cf6; color:#7c3aed; background:#f5f3ff; }
+    .btn-cover:hover { background:#ede9fe; }
 
-    .img-box { width: 100%; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 1px solid #eee; background: #f8f9fa; }
-    .img-box img { width: 100%; height: 100%; object-fit: cover; }
-    .text-box { font-size: 18px; line-height: 1.7; white-space: pre-wrap; padding: 20px; }
+    /* 뷰어 컨테이너 (화면 표시용) */
+    .viewer-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        height: 75vh;
+        min-height: 400px;
+    }
 
-    /* 좌우 화살표 버튼 */
+    .viewer {
+        display: flex;
+        height: 100%;
+        aspect-ratio: 2 / 1.414;
+        max-width: 100%;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        background: #fff;
+    }
+
+    .viewer-panel { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #fff; }
+    .viewer-left { border-right: 1px solid #eee; }
+
+    .panel-img { width: 100%; height: 100%; object-fit: cover; }
+    .panel-text { padding: 40px; font-size: 18px; line-height: 1.7; white-space: pre-wrap; text-align: center; }
+
+    .cover-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; z-index: 10; }
+    .cover-title-text { background:rgba(255,255,255,0.85); padding:10px 24px; border-radius:12px; font-size:28px; font-weight:800; margin-bottom:10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .cover-author-text { background:rgba(255,255,255,0.85); padding:5px 16px; border-radius:20px; font-size:16px; font-weight:600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
     .arrow {
         width: 50px; height: 50px; border-radius: 50%; border: 1px solid #ddd; background: #fff;
         font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10;
-        user-select: none;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 20; user-select: none;
     }
     .arrow:hover { background: #f0f0f0; }
-    .arrow:active { transform: translateY(1px); }
 
-    /* 하단 썸네일 */
-    .thumbs{display:flex; gap:10px; margin-top:30px; overflow-x:auto; padding-bottom:10px}
-    .thumb{flex:0 0 100px; cursor:pointer; border:2px solid transparent; border-radius:8px; opacity:0.6; transition:0.2s}
+    .thumbs{display:flex; gap:10px; margin-top:20px; overflow-x:auto; padding-bottom:10px; justify-content: center;}
+    .thumb{flex:0 0 80px; height: 80px; cursor:pointer; border:2px solid transparent; border-radius:8px; opacity:0.6; transition:0.2s; position:relative; overflow: hidden;}
     .thumb:hover{opacity:1}
     .thumb.active{border-color:var(--brand); opacity:1}
-    .thumb img{width:100%; height:100px; object-fit:cover; border-radius:6px}
+    .thumb img{width:100%; height:100%; object-fit:cover;}
+    .thumb-badge { position:absolute; top:0; left:0; background:#8b5cf6; color:#fff; font-size:10px; padding:2px 4px; border-radius:0 0 4px 0; font-weight:bold; }
 
-    /* 인쇄(PDF) 스타일 - 가로형(Landscape Book Layout) */
-    @page {
-        size: A4 landscape; /* 가로 방향 설정 */
-        margin: 0;
-    }
+    /* 인쇄 스타일 */
+    @page { size: A4 landscape; margin: 0; }
     @media print {
-      body { background: #fff; }
+      body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .header, .thumbs, .arrow, .nav-hint, .viewer-container { display: none !important; }
-
       .wrap { max-width: 100%; padding: 0; margin: 0; }
-
-      /* 인쇄용 리스트 보이기 */
       .print-only-list { display: block !important; }
 
-      /* 각 페이지(펼침면) 스타일 */
-      .print-spread {
-          display: flex;
-          flex-direction: row; /* 가로 배치 */
-          width: 100vw;
-          height: 100vh;
-          break-after: page; /* 페이지 넘김 */
-          page-break-after: always;
-          align-items: center;
-          justify-content: center;
+      .print-spread, .cover-print-container {
+          display: flex; flex-direction: row; width: 100vw; height: 100vh;
+          break-after: page; page-break-after: always;
+          align-items: center; justify-content: center;
       }
 
-      /* 왼쪽 그림 */
-      .print-left {
-          width: 50%;
-          height: 100%;
-          padding: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-      }
-      .print-left img {
-          max-width: 100%;
-          max-height: 90%;
-          object-fit: contain;
-          border-radius: 8px;
-          border: 1px solid #eee;
+      /* 마지막 페이지 뒤 빈 종이 방지 */
+      .print-only-list > div:last-child {
+          break-after: auto !important;
+          page-break-after: auto !important;
       }
 
-      /* 오른쪽 글 */
-      .print-right {
-          width: 50%;
-          height: 100%;
-          padding: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: center; /* 중앙 정렬 */
-          font-size: 22px;
-          line-height: 2.0;
-          white-space: pre-wrap;
-          box-sizing: border-box;
+      .print-half { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden; position: relative; }
+      .print-left-img img { max-width: 100%; max-height: 90%; object-fit: contain; }
+      .print-right-text { padding: 60px; font-size: 22px; line-height: 2.0; white-space: pre-wrap; }
+
+      /* 표지 인쇄 설정 (좌: 뒷표지 / 우: 앞표지) */
+      .print-back-cover {
+        width: 50%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        /* 뒷표지 텍스트 제거됨 */
       }
+      .print-front-cover {
+        width: 50%; height: 100%; position: relative;
+      }
+      .print-cover-img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+      .print-cover-info { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; padding:60px; z-index:10; }
+
+      .pc-title { font-size:42px; font-weight:900; background:rgba(255,255,255,0.85); padding:15px 30px; border-radius:10px; margin-bottom:20px; text-align:center; }
+      .pc-author { font-size:20px; background:rgba(255,255,255,0.85); padding:8px 20px; border-radius:30px; }
     }
-
     .print-only-list { display: none; }
   </style>
 </head>
@@ -113,8 +117,8 @@
       <div class="title">📖 {{ title }}</div>
       <div class="actions">
         <a href="/dashboard" class="btn">대시보드</a>
-
         <a href="/images" class="btn">← 이미지 생성으로</a>
+        <a href="/cover/{{ story_id }}" class="btn btn-cover">🎨 표지 꾸미기</a>
         <button onclick="handlePrint()" class="btn primary">PDF 저장 / 인쇄</button>
         <button onclick="handleDelete()" class="btn danger">삭제</button>
       </div>
@@ -124,34 +128,47 @@
         <button class="arrow" onclick="moveSlide(-1)">‹</button>
 
         <div class="viewer">
-            <div class="img-box"><img id="mainImg" src="" alt="scene"></div>
-            <div class="text-box" id="mainText"></div>
+            <div class="viewer-panel viewer-left" id="leftPanel"></div>
+            <div class="viewer-panel viewer-right" id="rightPanel"></div>
         </div>
 
         <button class="arrow" onclick="moveSlide(1)">›</button>
     </div>
 
-    <div class="thumbs" id="thumbsList">
-      {% for p in pages %}
-      <div class="thumb" onclick="changePage({{ loop.index0 }})">
-        <img src="{{ p.url }}" alt="p{{ p.index }}">
-      </div>
-      {% endfor %}
-    </div>
+    <div class="thumbs" id="thumbsList"></div>
   </div>
 
   <div class="print-only-list">
-    <div class="print-spread" style="flex-direction:column; justify-content:center; text-align:center;">
+    {% if cover %}
+    <div class="cover-print-container">
+       <div class="print-back-cover" style="background-color: {{ cover.back_color }}">
+           </div>
+
+       <div class="print-front-cover" style="background-color: {{ cover.back_color }}">
+          {% if cover.front_image_url %}
+          <img src="{{ cover.front_image_url }}" class="print-cover-img">
+          {% endif %}
+          <div class="print-cover-info" style="justify-content: {{ 'flex-start' if cover.title_position=='top' else ('flex-end' if cover.title_position=='bottom' else 'center') }}">
+             <div class="pc-title">{{ title }}</div>
+             {% if cover.author_name %}
+             <div class="pc-author">{{ cover.author_name }} 지음</div>
+             {% endif %}
+          </div>
+       </div>
+    </div>
+    {% else %}
+    <div class="print-spread" style="flex-direction:column; text-align:center;">
         <h1 style="font-size:48px; margin-bottom:20px;">{{ title }}</h1>
         <p style="font-size:20px; color:#666;">AI Storybook</p>
     </div>
+    {% endif %}
 
     {% for p in pages %}
     <div class="print-spread">
-      <div class="print-left">
-          <img src="{{ p.url }}" alt="Scene {{ p.index }}">
+      <div class="print-half print-left-img">
+          <img src="{{ p.url }}" alt="Scene">
       </div>
-      <div class="print-right">
+      <div class="print-half print-right-text">
           <p>{{ p.text }}</p>
       </div>
     </div>
@@ -161,58 +178,117 @@
   <script>
     const pages = {{ pages|tojson }};
     const storyId = {{ story_id or 0 }};
+    const coverData = {{ cover|tojson if cover else 'null' }};
+    const storyTitle = "{{ title }}";
+
+    let slides = [];
+    if (coverData) {
+      slides.push({
+        type: 'cover',
+        frontUrl: coverData.front_image_url,
+        backColor: coverData.back_color,
+        author: coverData.author_name,
+        pos: coverData.title_position
+      });
+    }
+    pages.forEach(p => slides.push({ type: 'page', ...p }));
 
     let currentIndex = 0;
-    const mainImg = document.getElementById('mainImg');
-    const mainText = document.getElementById('mainText');
-    const thumbEls = document.getElementById('thumbsList').children;
+    const leftPanel = document.getElementById('leftPanel');
+    const rightPanel = document.getElementById('rightPanel');
+    const thumbsList = document.getElementById('thumbsList');
+
+    function renderThumbs() {
+      thumbsList.innerHTML = '';
+      slides.forEach((s, idx) => {
+        const div = document.createElement('div');
+        div.className = 'thumb';
+        div.onclick = () => changePage(idx);
+        const img = document.createElement('img');
+        if(s.type === 'cover') {
+           img.src = s.frontUrl || '';
+           if(!s.frontUrl) img.style.background = s.backColor;
+           const badge = document.createElement('div');
+           badge.className = 'thumb-badge';
+           badge.innerText = '표지';
+           div.appendChild(badge);
+        } else {
+           img.src = s.url || '';
+        }
+        div.appendChild(img);
+        thumbsList.appendChild(div);
+      });
+    }
 
     function changePage(idx) {
-      if(idx < 0 || idx >= pages.length) return;
+      if(idx < 0 || idx >= slides.length) return;
       currentIndex = idx;
+      const s = slides[idx];
+      leftPanel.innerHTML = '';
+      rightPanel.innerHTML = '';
 
-      const p = pages[idx];
-      mainImg.src = p.url;
-      mainText.textContent = p.text;
+      if (s.type === 'cover') {
+        // [웹 화면] 왼쪽: 앞표지 / 오른쪽: 뒷표지(텍스트 포함)
+        const img = document.createElement('img');
+        img.className = 'panel-img';
+        img.src = s.frontUrl || '';
+        if(!s.frontUrl) leftPanel.style.backgroundColor = s.backColor;
 
-      Array.from(thumbEls).forEach((el, i) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'cover-overlay';
+        if(s.pos === 'top') overlay.style.justifyContent = 'flex-start';
+        else if(s.pos === 'bottom') overlay.style.justifyContent = 'flex-end';
+        overlay.innerHTML = `<div class="cover-title-text">${storyTitle}</div><div class="cover-author-text">${s.author || '지은이'}</div>`;
+
+        leftPanel.appendChild(img);
+        leftPanel.appendChild(overlay);
+
+        rightPanel.style.backgroundColor = s.backColor;
+        const backText = document.createElement('div');
+        backText.innerText = "뒷표지";
+        backText.style.color = "rgba(0,0,0,0.3)";
+        backText.style.fontWeight = "bold";
+        rightPanel.appendChild(backText);
+
+      } else {
+        const img = document.createElement('img');
+        img.className = 'panel-img';
+        img.src = s.url;
+        leftPanel.appendChild(img);
+        leftPanel.style.background = '#fff';
+
+        const txt = document.createElement('div');
+        txt.className = 'panel-text';
+        txt.textContent = s.text;
+        rightPanel.appendChild(txt);
+        rightPanel.style.background = '#fff';
+      }
+
+      Array.from(thumbsList.children).forEach((el, i) => {
         el.classList.toggle('active', i === idx);
       });
     }
 
-    function moveSlide(dir) {
-        changePage(currentIndex + dir);
-    }
-
+    function moveSlide(dir) { changePage(currentIndex + dir); }
     window.addEventListener('keydown', (e) => {
         if(e.key === 'ArrowLeft') moveSlide(-1);
         if(e.key === 'ArrowRight') moveSlide(1);
     });
 
-    if(pages.length > 0) changePage(0);
-
-    function handlePrint() {
-      window.print();
-    }
+    function handlePrint() { window.print(); }
 
     async function handleDelete() {
-      if(!storyId) return alert('삭제할 대상이 없습니다.');
-
-      if(confirm('정말 이 동화책을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) {
+      if(!storyId) return;
+      if(confirm('정말 삭제하시겠습니까?')) {
         try {
           const res = await fetch('/api/story/' + storyId, { method: 'DELETE' });
-          const data = await res.json();
-          if(data.ok) {
-            alert('삭제되었습니다.');
-            window.location.href = '/dashboard';
-          } else {
-            alert('삭제 실패: ' + (data.error || '알 수 없는 오류'));
-          }
-        } catch(e) {
-          alert('서버 통신 오류');
-        }
+          if((await res.json()).ok) location.href = '/dashboard';
+        } catch(e){ alert('오류가 발생했습니다.'); }
       }
     }
+
+    renderThumbs();
+    changePage(0);
   </script>
 </body>
 </html>

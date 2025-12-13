@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>표지 꾸미기</title>
+  <style>
+    body { margin:0; font-family:-apple-system, sans-serif; background:#f3f4f6; color:#111; display:flex; height:100vh; overflow:hidden; }
+
+    /* 좌측 컨트롤 패널 */
+    .controls { width: 340px; background:#fff; border-right:1px solid #ddd; padding:25px; display:flex; flex-direction:column; gap:20px; overflow-y:auto; box-sizing:border-box; flex-shrink:0; }
+    h2 { margin:0; font-size:22px; font-weight:700; }
+
+    .group { display:grid; gap:8px; }
+    label { font-size:14px; font-weight:600; color:#333; display:flex; justify-content:space-between; align-items:center; }
+    .helper { font-size:12px; color:#888; font-weight:400; }
+    input, select, button, textarea { padding:12px; border:1px solid #ddd; border-radius:8px; width:100%; box-sizing:border-box; font-family:inherit; }
+    textarea { resize: vertical; height: 80px; }
+
+    .btn { cursor:pointer; font-weight:bold; transition:0.2s; border:none; font-size:15px; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { background:#2563eb; color:#fff; }
+    .btn-primary:hover:not(:disabled) { background:#1d4ed8; }
+    .btn-outline { background:#fff; border:1px solid #ddd; color:#333; }
+    .btn-outline:hover:not(:disabled) { background:#f9fafb; }
+
+    /* 우측 미리보기 영역 */
+    .preview-area { flex:1; display:flex; align-items:center; justify-content:center; background:#e5e7eb; padding:20px; overflow:auto; }
+
+    /* 펼침면 컨테이너 */
+    .spread-book {
+      display: flex;
+      height: 80vh;
+      max-height: 700px;
+      aspect-ratio: 1.414 / 1;
+      background: #fff;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .cover-page {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+
+    /* 앞표지 */
+    .front-cover {
+      background: #fff;
+      border-right: 1px solid rgba(0,0,0,0.1);
+    }
+    .cover-img { position: absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+
+    .text-layer {
+      position: absolute; inset:0; z-index:10;
+      display: flex; flex-direction:column; align-items:center;
+      padding: 40px; text-align: center;
+      justify-content: center;
+    }
+    .book-title-preview {
+      font-size: 32px; font-weight: 800; line-height: 1.3;
+      text-shadow: 0 2px 10px rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.7);
+      padding: 12px 24px; border-radius: 12px;
+      margin-bottom: 16px;
+      word-break: keep-all;
+      max-width: 90%;
+    }
+    .book-author-preview {
+      font-size: 18px; font-weight: 500;
+      background: rgba(255,255,255,0.7);
+      padding: 6px 16px; border-radius: 20px;
+    }
+
+    /* 뒷표지 */
+    .back-cover {
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(0,0,0,0.4); font-weight: bold; font-size: 14px;
+    }
+
+    /* 로딩 오버레이 & 스피너 */
+    .loading {
+      position:absolute; inset:0;
+      background: #fff; /* 완전 불투명 흰색으로 덮어서 깜빡임 방지 */
+      display:none;
+      flex-direction:column; align-items:center; justify-content:center;
+      z-index:100;
+      color: #2563eb; font-weight:bold; gap:15px;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #2563eb;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  </style>
+</head>
+<body>
+
+  <div class="controls">
+    <div>
+      <h2>🎨 표지 꾸미기</h2>
+      <p style="font-size:14px; color:#666; margin-top:5px">펼침면(앞/뒤)을 확인하며 디자인하세요.</p>
+    </div>
+    <hr style="border:0; border-top:1px solid #eee; margin:0;">
+
+    <div class="group">
+      <label>1. 책 제목</label>
+      <input type="text" id="titleInput" value="{{ story.title }}">
+    </div>
+
+    <div class="group">
+      <label>2. 그림 설명 (프롬프트)</label>
+      <textarea id="promptInput" placeholder="예: 우주복을 입은 아기 고양이, 반짝이는 별 배경, 따뜻한 수채화 느낌"></textarea>
+      <button id="btnGen" class="btn btn-primary" style="margin-top:5px">✨ 그림 다시 그리기</button>
+      <p style="font-size:11px; color:#666; margin:3px 0 0 0">* 비워두면 제목에 맞춰 자동으로 그려집니다.</p>
+    </div>
+
+    <div class="group">
+      <label>3. 제목 위치</label>
+      <select id="posSelect">
+        <option value="top">상단 (Top)</option>
+        <option value="middle" selected>중앙 (Middle)</option>
+        <option value="bottom">하단 (Bottom)</option>
+      </select>
+    </div>
+
+    <div class="group">
+      <label>4. 작가 이름</label>
+      <input type="text" id="authorInput" placeholder="지은이" value="{{ cover.author_name if cover else '' }}">
+    </div>
+
+    <div class="group">
+      <label>5. 배경색 (뒷표지)</label>
+      <div style="display:flex; gap:10px;">
+        <input type="color" id="colorInput" value="{{ cover.back_color if cover else '#f3e8ff' }}" style="height:40px; padding:2px; flex:1;">
+      </div>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <div class="group" style="gap:10px">
+      <button id="btnSave" class="btn btn-primary" style="height:50px; font-size:17px;">💾 저장하고 완료</button>
+      <button id="btnCancel" class="btn btn-outline" style="height:40px;">취소</button>
+    </div>
+  </div>
+
+  <div class="preview-area">
+    <div class="spread-book">
+
+        <div class="cover-page front-cover" id="frontCover">
+            <div class="loading" id="loader">
+               <div class="spinner"></div>
+               <div>AI 화가가 열심히 그리고 있어요...</div>
+            </div>
+
+            <img id="coverImg" class="cover-img" src="{{ cover.front_image_url if cover else '' }}" style="display: {{ 'block' if cover and cover.front_image_url else 'none' }}">
+
+            <div class="text-layer" id="textLayer">
+              <div class="book-title-preview" id="previewTitle">{{ story.title }}</div>
+              <div class="book-author-preview" id="previewAuthor">{{ cover.author_name if cover else '지은이' }}</div>
+            </div>
+        </div>
+
+        <div class="cover-page back-cover" id="backCover">
+            뒷표지
+        </div>
+
+    </div>
+  </div>
+
+  <script>
+    const storyId = {{ story.id }};
+    const storyGenre = "{{ story.genre }}";
+
+    const titleInput = document.getElementById('titleInput');
+    const promptInput = document.getElementById('promptInput');
+    const btnGen = document.getElementById('btnGen');
+    const btnSave = document.getElementById('btnSave');
+    const btnCancel = document.getElementById('btnCancel');
+    const posSelect = document.getElementById('posSelect');
+    const authorInput = document.getElementById('authorInput');
+    const colorInput = document.getElementById('colorInput');
+
+    const coverImg = document.getElementById('coverImg');
+    const textLayer = document.getElementById('textLayer');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewAuthor = document.getElementById('previewAuthor');
+    const backCover = document.getElementById('backCover');
+    const frontCover = document.getElementById('frontCover');
+    const loader = document.getElementById('loader');
+
+    let currentImageUrl = coverImg.src || "";
+
+    // 실시간 반응
+    titleInput.addEventListener('input', (e) => previewTitle.textContent = e.target.value || "제목");
+    authorInput.addEventListener('input', (e) => previewAuthor.textContent = e.target.value || "지은이");
+
+    function updatePos() {
+      const pos = posSelect.value;
+      if(pos === 'top') {
+        textLayer.style.justifyContent = 'flex-start'; textLayer.style.paddingTop = '60px';
+      } else if(pos === 'bottom') {
+        textLayer.style.justifyContent = 'flex-end'; textLayer.style.paddingBottom = '60px';
+      } else {
+        textLayer.style.justifyContent = 'center'; textLayer.style.padding = '40px';
+      }
+    }
+    posSelect.addEventListener('change', updatePos);
+    posSelect.value = "{{ cover.title_position if cover else 'middle' }}";
+    updatePos();
+
+    function updateColor(val) {
+      backCover.style.backgroundColor = val;
+      if(!currentImageUrl) frontCover.style.backgroundColor = val;
+    }
+    colorInput.addEventListener('input', (e) => updateColor(e.target.value));
+    updateColor(colorInput.value);
+
+    // [핵심 수정] AI 생성 로직
+    btnGen.addEventListener('click', async () => {
+      const prompt = promptInput.value.trim();
+      const title = titleInput.value.trim();
+
+      // 1. 로딩 시작
+      loader.style.display = 'flex';
+      btnGen.disabled = true;
+      btnGen.textContent = "✨ 그리는 중...";
+
+      try {
+        // 2. 서버 요청
+        const res = await fetch('/api/cover/generate_image', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ prompt, title, genre: storyGenre })
+        });
+        const data = await res.json();
+
+        if(data.ok) {
+          currentImageUrl = data.url;
+
+          // 3. [중요] 이미지 로딩 대기
+          // URL만 넣는 게 아니라, 이미지가 로드 완료(onload)될 때까지 로딩창을 끄지 않음
+          coverImg.onload = function() {
+              loader.style.display = 'none'; // 다 그려지면 그때 로딩 끔
+              btnGen.disabled = false;
+              btnGen.textContent = "✨ 그림 다시 그리기";
+              coverImg.style.display = 'block';
+          };
+
+          // 이미지 로드 시작
+          coverImg.src = currentImageUrl;
+
+        } else {
+          throw new Error('생성 실패');
+        }
+      } catch(e) {
+          console.error(e);
+          alert('오류가 발생했습니다.');
+          loader.style.display = 'none';
+          btnGen.disabled = false;
+          btnGen.textContent = "✨ 그림 다시 그리기";
+      }
+    });
+
+    // 저장
+    btnSave.addEventListener('click', async () => {
+      const title = titleInput.value.trim();
+      if(!title) return alert('제목을 입력하세요');
+
+      btnSave.textContent = '저장 중...';
+      btnSave.disabled = true;
+      try {
+        const payload = {
+          story_id: storyId,
+          title: title,
+          image_url: currentImageUrl,
+          position: posSelect.value,
+          author: authorInput.value,
+          color: colorInput.value
+        };
+        const res = await fetch('/api/cover/save', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if((await res.json()).ok) location.href = `/preview/${storyId}`;
+        else { alert('저장 실패'); btnSave.disabled=false; btnSave.textContent='💾 저장하고 완료'; }
+      } catch(e) { alert('오류'); btnSave.disabled=false; btnSave.textContent='💾 저장하고 완료'; }
+    });
+
+    btnCancel.onclick = () => location.href = `/preview/${storyId}`;
+  </script>
+</body>
+</html>

@@ -186,14 +186,36 @@
       alert('임시 저장되었습니다.');
     };
 
+    // [수정] 이미지 생성 페이지로 이동 (제목 필수 체크 추가)
     el.btnToImages.onclick = async () => {
-      const data = { title: el.title.value, pages: getPagesData() };
-      await fetch('/api/editor/cache', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-      });
-      location.href = '/images';
+      // 1. 제목 입력 확인
+      const titleVal = el.title.value.trim();
+      if (!titleVal) {
+        alert('제목을 입력해주세요!');
+        el.title.focus(); // 제목 입력창으로 포커스 이동
+        return; // 진행 중단
+      }
+
+      // 2. 데이터 저장 및 이동
+      const data = { title: titleVal, pages: getPagesData() };
+
+      // 버튼 비활성화 (중복 클릭 방지)
+      el.btnToImages.disabled = true;
+      el.btnToImages.innerText = '이동 중...';
+
+      try {
+        await fetch('/api/editor/cache', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        location.href = '/images';
+      } catch (e) {
+        console.error(e);
+        alert('이동 중 오류가 발생했습니다.');
+        el.btnToImages.disabled = false;
+        el.btnToImages.innerText = '이미지 생성';
+      }
     };
 
     el.btnAiPlot.onclick = async () => {
@@ -219,10 +241,20 @@
         const boxes = el.pagesWrap.querySelectorAll('.page-box');
         data.pages.forEach(p => {
           if(boxes[p.index]) {
-            boxes[p.index].querySelector('.txt-area').value = p.text;
+            let content = p.text;
+
+            // [수정] 만약 내용이 객체(Object)라면 문자열로 변환해서 보여줌!
+            if (typeof content === 'object') {
+                content = JSON.stringify(content, null, 2);
+            }
+
+            boxes[p.index].querySelector('.txt-area').value = content;
           }
         });
-      } catch(e) { alert('오류 발생'); }
+      } catch(e) {
+          console.error(e);
+          alert('오류 발생');
+      }
       el.btnAiPlot.disabled = false;
       el.btnAiPlot.innerText = 'AI로 추천 플롯 생성';
     };
